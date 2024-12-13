@@ -49,7 +49,9 @@ databaseChangeLog:
                   type: VARCHAR(255)
               - column:
                   name: refresh_token_expiry_date
-                  type: TIMESTAMP
+                  type: TIMESTAMP(6)
+        - sql:
+            sql: "ALTER TABLE users ALTER COLUMN refresh_token_expiry_date SET DATA TYPE TIMESTAMP(6) WITHOUT TIME ZONE USING refresh_token_expiry_date::TIMESTAMP(6) WITHOUT TIME ZONE;"
 
   - changeSet:
       id: 2024-13-12-create-role-table
