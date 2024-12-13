@@ -3,11 +3,11 @@ package com.techstud.sch_auth.security.impl;
 import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.security.JwtGenerateService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@Log4j2
+@Slf4j
 @RequiredArgsConstructor
 public class JwtGenerateServiceImpl implements JwtGenerateService {
 

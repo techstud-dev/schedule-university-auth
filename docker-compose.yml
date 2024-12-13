@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: schedule_university_auth_DB
+    environment:
+      POSTGRES_USER: abuser
+      POSTGRES_PASSWORD: abuser
+      POSTGRES_DB: schedule_university_auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

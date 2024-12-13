@@ -18,6 +18,12 @@ public class Role implements GrantedAuthority {
     @Setter
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    @Getter
+    @Setter
+    private User user;
+
     @Column(unique = true)
     private String name;
 

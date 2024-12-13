@@ -1,4 +1,4 @@
-package exception;
+package com.techstud.sch_auth.exception;
 
 import lombok.experimental.StandardException;
 

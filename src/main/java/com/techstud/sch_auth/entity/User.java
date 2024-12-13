@@ -29,7 +29,7 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String phoneNumber;
 
-    @OneToMany(mappedBy = "user", targetEntity = Role.class, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", targetEntity = Role.class, fetch = FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Role> roles;
 
     @Embedded

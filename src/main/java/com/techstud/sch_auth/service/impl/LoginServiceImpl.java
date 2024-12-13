@@ -6,11 +6,11 @@ import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.JwtGenerateService;
 import com.techstud.sch_auth.service.AbstractAuthService;
 import com.techstud.sch_auth.service.LoginService;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@Log4j2
+@Slf4j
 public class LoginServiceImpl extends AbstractAuthService implements LoginService {
 
     public LoginServiceImpl(UserRepository userRepository,

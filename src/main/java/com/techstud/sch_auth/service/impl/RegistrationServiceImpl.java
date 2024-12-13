@@ -5,14 +5,14 @@ import com.techstud.sch_auth.repository.RoleRepository;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.JwtGenerateService;
 import com.techstud.sch_auth.service.AbstractAuthService;
-import com.techstud.sch_auth.service.RegisterationService;
-import exception.UserExistsException;
-import lombok.extern.log4j.Log4j2;
+import com.techstud.sch_auth.service.RegistrationService;
+import com.techstud.sch_auth.exception.UserExistsException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@Log4j2
-public class RegistrationServiceImpl extends AbstractAuthService implements RegisterationService {
+@Slf4j
+public class RegistrationServiceImpl extends AbstractAuthService implements RegistrationService {
 
     public RegistrationServiceImpl(UserRepository userRepository,
                                    RoleRepository roleRepository,

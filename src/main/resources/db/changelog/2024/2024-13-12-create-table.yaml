@@ -1,0 +1,84 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: 2024-13-12-create-user-table
+      changes:
+        - createSequence:
+            sequenceName: user_id_seq
+            startValue: 1
+            incrementBy: 1
+        - createSequence:
+            sequenceName: role_id_seq
+            startValue: 1
+            incrementBy: 1
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: phone_number
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: refresh_token_value
+                  type: VARCHAR(255)
+              - column:
+                  name: refresh_token_expiry_date
+                  type: TIMESTAMP
+
+  - changeSet:
+      id: 2024-13-12-create-role-table
+      author: Generated
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: roles
+            baseColumnNames: user_id
+            constraintName: fk_roles_user
+            referencedTableName: users
+            referencedColumnNames: id

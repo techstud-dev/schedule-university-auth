@@ -7,7 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserRepository extends JpaRepository<Long, User> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value = """
     SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u \s
