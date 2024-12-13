@@ -3,6 +3,7 @@ package com.techstud.sch_auth.service.impl;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
+import com.techstud.sch_auth.entity.Role;
 import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.repository.RoleRepository;
 import com.techstud.sch_auth.repository.UserRepository;
@@ -13,8 +14,10 @@ import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.service.UserFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Slf4j
@@ -38,8 +41,14 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
                 registerDto.getUsername(),
                 registerDto.getEmail(),
                 registerDto.getPhoneNumber())) {
-            throw new UserExistsException("User with this credentials already exists!");
+            throw new UserExistsException("User with these credentials already exists!");
         }
+
+        Role userRole = roleRepository.findByName("USER").orElseGet(() -> {
+            Role newRole = new Role();
+            newRole.setName("USER");
+            return roleRepository.save(newRole);
+        });
 
         User newUser = userFactory.createUser(
                 registerDto.getUsername(),
@@ -47,6 +56,8 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
                 registerDto.getEmail(),
                 registerDto.getPhoneNumber()
         );
+
+        newUser.setRole(userRole);
 
         String accessToken = jwtGenerateService.generateToken(newUser);
         String refreshToken = jwtGenerateService.generateRefreshToken(newUser);

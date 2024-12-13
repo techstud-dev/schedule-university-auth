@@ -5,8 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -33,15 +35,16 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String phoneNumber;
 
-    @OneToMany(mappedBy = "user", targetEntity = Role.class, fetch = FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<Role> roles;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
 
     @Embedded
     private RefreshToken refreshToken;
 
     @Override
-    public List<Role> getAuthorities() {
-        return roles;
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(role);
     }
 
 }

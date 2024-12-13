@@ -1,5 +1,6 @@
 package com.techstud.sch_auth.service;
 
+import com.techstud.sch_auth.entity.Role;
 import com.techstud.sch_auth.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
