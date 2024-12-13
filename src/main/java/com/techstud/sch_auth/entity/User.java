@@ -1,6 +1,8 @@
 package com.techstud.sch_auth.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +12,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @Entity
+@Builder
+@AllArgsConstructor
 @Table(name = "users")
 public class User implements UserDetails {
 
