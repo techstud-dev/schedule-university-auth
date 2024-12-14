@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UserAlreadyExistsResponse {
+public class UserNotFoundResponse {
     private String systemName;
     private String applicationName;
     private String error;

@@ -4,9 +4,10 @@ import com.techstud.sch_auth.config.JwtProperties;
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
-import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.service.AuthFacade;
-import com.techstud.sch_auth.swagger.UserAlreadyExistsResponse;
+import com.techstud.sch_auth.swagger.BadCredentialsResponse;
+import com.techstud.sch_auth.swagger.UserAlreadyExistResponse;
+import com.techstud.sch_auth.swagger.UserNotFoundResponse;
 import com.techstud.sch_auth.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,10 +41,65 @@ public class AuthController {
         this.cookieUtil = cookieUtil;
     }
 
+    @Operation(
+            summary = "Логин существующего пользователя.",
+            description = "Проверяет существует ли пользователь в системе и при успешном запросе возвращает JWT токены." +
+                    " Файлы cookie для токенов устанавливаются в заголовках ответов.",
+            tags = {"Authentication"},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Данные логина пользователяя",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginDto.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Успешный вход",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SuccessAuthenticationDto.class)
+                            ),
+                            headers = {
+                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит access token"),
+                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит refresh token")
+                            }
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Неверные входные данные",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = BadCredentialsResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Пользователь с такими данными не найден",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = UserNotFoundResponse.class)
+                            )
+                    )
+            }
+    )
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
-        //TODO: implement me!
-        return ResponseEntity.ok().build();
+        log.info("Received login request: {}", loginDto);
+        SuccessAuthenticationDto response = authFacade.login(loginDto);
+
+        ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie("accessToken",
+                response.getToken(), jwtProperties.getAccessTokenExpiration(), true);
+
+        ResponseCookie refreshTokenCookie = cookieUtil.createHttpOnlyCookie("refreshToken",
+                response.getRefreshToken(), jwtProperties.getRefreshTokenExpiration(), true);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(response);
     }
 
     @Operation(
@@ -74,19 +129,11 @@ public class AuthController {
                             }
                     ),
                     @ApiResponse(
-                            responseCode = "400",
-                            description = "Ошибка валидации или неправильный запрос",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = ErrorResponse.class)
-                            )
-                    ),
-                    @ApiResponse(
                             responseCode = "409",
                             description = "Пользователь уже существует",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = UserAlreadyExistsResponse.class)
+                                    schema = @Schema(implementation = UserAlreadyExistResponse.class)
                             )
                     )
             }

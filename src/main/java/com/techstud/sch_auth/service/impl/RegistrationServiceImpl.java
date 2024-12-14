@@ -27,9 +27,9 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
     public RegistrationServiceImpl(UserRepository userRepository,
                                    RoleRepository roleRepository,
                                    JwtGenerateService jwtGenerateService,
-                                   UserFactory userFactory1) {
+                                   UserFactory userFactory) {
         super(userRepository, roleRepository, jwtGenerateService);
-        this.userFactory = userFactory1;
+        this.userFactory = userFactory;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
                 registerDto.getUsername(),
                 registerDto.getEmail(),
                 registerDto.getPhoneNumber())) {
-            throw new UserExistsException("User with these credentials already exists!");
+            throw new UserExistsException();
         }
     }
 
