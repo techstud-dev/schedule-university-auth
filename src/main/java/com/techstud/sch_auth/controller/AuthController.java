@@ -4,7 +4,9 @@ import com.techstud.sch_auth.config.JwtProperties;
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
+import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.service.AuthFacade;
+import com.techstud.sch_auth.swagger.UserAlreadyExistsResponse;
 import com.techstud.sch_auth.util.CookieUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -84,7 +86,7 @@ public class AuthController {
                             description = "Пользователь уже существует",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = ErrorResponse.class)
+                                    schema = @Schema(implementation = UserAlreadyExistsResponse.class)
                             )
                     )
             }
