@@ -14,10 +14,8 @@ import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.service.UserFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.UUID;
 
 @Slf4j
@@ -36,46 +34,63 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
 
     @Override
     public SuccessAuthenticationDto processRegister(RegisterDto registerDto) throws UserExistsException {
+        validateUserUniqueness(registerDto);
 
+        Role userRole = getOrCreateUserRole();
+
+        User newUser = createUser(registerDto, userRole);
+
+        String accessToken = jwtGenerateService.generateToken(newUser);
+        String refreshToken = jwtGenerateService.generateRefreshToken(newUser);
+
+        embedRefreshToken(newUser, refreshToken);
+
+        userRepository.save(newUser);
+        log.info("Saved new user: {}", newUser);
+
+        return buildSuccessResponse(accessToken, refreshToken);
+    }
+
+    private void validateUserUniqueness(RegisterDto registerDto) throws UserExistsException {
         if (userRepository.existsByUniqueFields(
                 registerDto.getUsername(),
                 registerDto.getEmail(),
                 registerDto.getPhoneNumber())) {
             throw new UserExistsException("User with these credentials already exists!");
         }
+    }
 
-        Role userRole = roleRepository.findByName("USER").orElseGet(() -> {
+    public Role getOrCreateUserRole() {
+        return roleRepository.findByName("USER").orElseGet(() -> {
             Role newRole = new Role();
             newRole.setName("USER");
             return roleRepository.save(newRole);
         });
+    }
 
+    private User createUser(RegisterDto registerDto, Role userRole) {
         User newUser = userFactory.createUser(
                 registerDto.getUsername(),
                 registerDto.getPassword(),
                 registerDto.getEmail(),
                 registerDto.getPhoneNumber()
         );
-
         newUser.setRole(userRole);
+        return newUser;
+    }
 
-        String accessToken = jwtGenerateService.generateToken(newUser);
-        String refreshToken = jwtGenerateService.generateRefreshToken(newUser);
-
+    private void embedRefreshToken(User user, String refreshToken) {
         RefreshToken embeddedRefreshToken = new RefreshToken();
         embeddedRefreshToken.setRefreshToken(refreshToken);
         embeddedRefreshToken.setExpiryDate(LocalDateTime.now().plusHours(2));
-        newUser.setRefreshToken(embeddedRefreshToken);
+        user.setRefreshToken(embeddedRefreshToken);
+    }
 
-        userRepository.save(newUser);
-
-        log.info("Saved new user: {}", newUser);
-
+    private SuccessAuthenticationDto buildSuccessResponse(String accessToken, String refreshToken) {
         SuccessAuthenticationDto response = new SuccessAuthenticationDto();
         response.setRequestId(UUID.randomUUID().toString());
         response.setToken(accessToken);
         response.setRefreshToken(refreshToken);
-
         return response;
     }
 }

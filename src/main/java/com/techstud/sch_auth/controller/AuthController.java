@@ -6,6 +6,7 @@ import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.service.AuthFacade;
 import com.techstud.sch_auth.util.CookieUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -37,6 +38,9 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(
+
+    )
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterDto registerDto) {
         SuccessAuthenticationDto response = authFacade.register(registerDto);

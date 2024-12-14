@@ -37,6 +37,7 @@ public class JwtGenerateServiceImpl implements JwtGenerateService {
         long ACCESS_TOKEN_EXPIRATION_HOURS = 1;
         return JWT.create()
                 .withSubject(user.getUsername())
+                .withClaim("role", user.getRole().getAuthority())
                 .withIssuedAt(Date.from(Instant.now()))
                 .withExpiresAt(java.util.Date.from(Instant.now().plus(ACCESS_TOKEN_EXPIRATION_HOURS, ChronoUnit.HOURS)))
                 .sign(algorithm);
@@ -47,6 +48,7 @@ public class JwtGenerateServiceImpl implements JwtGenerateService {
         long REFRESH_TOKEN_EXPIRATION_HOURS = 2;
         return JWT.create()
                 .withSubject(user.getUsername())
+                .withClaim("role", user.getRole().getAuthority())
                 .withIssuedAt(Date.from(Instant.now()))
                 .withExpiresAt(java.util.Date.from(Instant.now().plus(REFRESH_TOKEN_EXPIRATION_HOURS, ChronoUnit.HOURS)))
                 .sign(algorithm);
