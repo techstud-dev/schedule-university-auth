@@ -7,6 +7,7 @@ import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
 import com.techstud.sch_auth.service.AuthFacade;
 import com.techstud.sch_auth.swagger.BadCredentialsResponse;
+import com.techstud.sch_auth.swagger.InvalidJwtTokenResponse;
 import com.techstud.sch_auth.swagger.UserAlreadyExistResponse;
 import com.techstud.sch_auth.swagger.UserNotFoundResponse;
 import com.techstud.sch_auth.util.CookieUtil;
@@ -43,12 +44,23 @@ public class AuthController {
     }
 
     @Operation(
-            summary = "Логин существующего пользователя.",
-            description = "Проверяет существует ли пользователь в системе и при успешном запросе возвращает JWT токены." +
-                    " Файлы cookie для токенов устанавливаются в заголовках ответов.",
+            summary = "Логин существующего пользователя",
+            description = """
+            Аутентифицирует пользователя на основе его учетных данных (username, email или phoneNumber).
+            При успешной аутентификации возвращает access и refresh JWT токены.
+            Токены устанавливаются в HttpOnly cookie в заголовках ответа.
+            """,
             tags = {"Authentication"},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Данные логина пользователяя",
+                    description = """
+                Данные для входа пользователя.
+                Поле `identificationField` может содержать username, email или номер телефона.
+                Пример запроса:
+                {
+                    "identificationField": "user@example.com",
+                    "password": "secure_password"
+                }
+                """,
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
@@ -58,19 +70,27 @@ public class AuthController {
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Успешный вход",
+                            description = "Успешный вход.",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = SuccessAuthenticationDto.class)
                             ),
                             headers = {
-                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит access token"),
-                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит refresh token")
+                                    @Header(
+                                            name = "Set-Cookie",
+                                            description = "HttpOnly cookie содержит access token.",
+                                            schema = @Schema(type = "string")
+                                    ),
+                                    @Header(
+                                            name = "Set-Cookie",
+                                            description = "HttpOnly cookie содержит refresh token.",
+                                            schema = @Schema(type = "string")
+                                    )
                             }
                     ),
                     @ApiResponse(
                             responseCode = "401",
-                            description = "Неверные входные данные",
+                            description = "Неверные учетные данные.",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = BadCredentialsResponse.class)
@@ -78,7 +98,7 @@ public class AuthController {
                     ),
                     @ApiResponse(
                             responseCode = "404",
-                            description = "Пользователь с такими данными не найден",
+                            description = "Пользователь с указанными учетными данными не найден.",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = UserNotFoundResponse.class)
@@ -104,11 +124,24 @@ public class AuthController {
 
     @Operation(
             summary = "Регистрация нового пользователя",
-            description = "Регистрирует нового пользователя в системе и возвращает токены доступа и обновления JWT." +
-                    " Файлы cookie для токенов устанавливаются в заголовках ответов.",
+            description = """
+            Регистрирует нового пользователя в системе.
+            После успешной регистрации возвращает JWT токены: access token и refresh token.
+            Токены передаются в ответе в виде HttpOnly cookie.
+            """,
             tags = {"Authentication"},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Данные регистрации пользователя",
+                    description = """
+                Данные для регистрации нового пользователя.
+                Объект должен содержать уникальные значения для `username`, `email` и `phoneNumber`.
+                Пример запроса:
+                {
+                    "username": "new_user",
+                    "password": "secure_password",
+                    "email": "user@example.com",
+                    "phoneNumber": "+1234567890"
+                }
+                """,
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
@@ -118,22 +151,49 @@ public class AuthController {
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Пользователь успешно зарегистрировался",
+                            description = "Пользователь успешно зарегистрировался.",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = SuccessAuthenticationDto.class)
                             ),
                             headers = {
-                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит access token"),
-                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит refresh token")
+                                    @Header(
+                                            name = "Set-Cookie",
+                                            description = "HttpOnly cookie содержит access token.",
+                                            schema = @Schema(type = "string")
+                                    ),
+                                    @Header(
+                                            name = "Set-Cookie",
+                                            description = "HttpOnly cookie содержит refresh token.",
+                                            schema = @Schema(type = "string")
+                                    )
                             }
                     ),
                     @ApiResponse(
                             responseCode = "409",
-                            description = "Пользователь уже существует",
+                            description = """
+                    Пользователь с указанными данными уже существует.
+                    Проверяются уникальные поля: `username`, `email` и `phoneNumber`.
+                    """,
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = UserAlreadyExistResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Некорректные учетные данные.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = BadCredentialsResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Пользователь не найден (неактуально для регистрации, но можно оставить как общий ответ).",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = UserNotFoundResponse.class)
                             )
                     )
             }
@@ -156,31 +216,66 @@ public class AuthController {
 
     @Operation(
             summary = "Обновление access токена",
-            description = "Обновляет access токен с использованием переданного refresh токена. " +
-                    "HttpOnly cookie с новым access токеном возвращается в заголовке ответа.",
+            description = """
+            Использует переданный refresh токен для обновления access токена.
+            Новый access токен возвращается в виде HttpOnly cookie в заголовке ответа.
+            """,
             tags = {"Authentication"},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Refresh токен",
+                    description = """
+                Объект с refresh токеном, который используется для обновления access токена.
+                Пример запроса:
+                {
+                    "refreshToken": "your_refresh_token"
+                }
+                """,
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(example = "{\"refreshToken\":\"your_refresh_token\"}")
+                            schema = @Schema(
+                                    example = """
+                        {
+                            "refreshToken": "your_refresh_token"
+                        }
+                        """
+                            )
                     )
             ),
             responses = {
                     @ApiResponse(
                             responseCode = "200",
-                            description = "Access токен успешно обновлён",
+                            description = "Access токен успешно обновлён.",
                             headers = {
-                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит новый access токен")
-                            }
+                                    @Header(
+                                            name = "Set-Cookie",
+                                            description = "HttpOnly cookie содержит новый access токен.",
+                                            schema = @Schema(type = "string")
+                                    )
+                            },
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(example = "Successfully refreshed token")
+                            )
                     ),
                     @ApiResponse(
                             responseCode = "401",
-                            description = "Refresh токен недействителен или истёк",
+                            description = """
+                    Обновление токена не удалось. Возможные причины:
+                    - Refresh токен недействителен
+                    - Refresh токен истёк
+                    - Пользователь не найден
+                    """,
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(example = "{\"error\":\"Invalid or expired refresh token\"}")
+                                    schema = @Schema(implementation = InvalidJwtTokenResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Внутренняя ошибка сервера.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(example = "{\"error\": \"Internal Server Error\"}")
                             )
                     )
             }
