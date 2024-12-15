@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Slf4j
@@ -37,18 +38,15 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
         validateUserUniqueness(registerDto);
 
         Role userRole = getOrCreateUserRole();
-
         User newUser = createUser(registerDto, userRole);
 
-        String accessToken = jwtGenerateService.generateToken(newUser);
-        String refreshToken = jwtGenerateService.generateRefreshToken(newUser);
+        String accessToken = jwtGenerateService.generateToken(newUser, 1);
+        String refreshTokenString = jwtGenerateService.generateRefreshToken(newUser, 2);
 
-        embedRefreshToken(newUser, refreshToken);
-
+        embedRefreshToken(newUser, refreshTokenString);
         userRepository.save(newUser);
-        log.info("Saved new user: {}", newUser);
 
-        return buildSuccessResponse(accessToken, refreshToken);
+        return buildSuccessResponse(accessToken, newUser.getRefreshToken());
     }
 
     private void validateUserUniqueness(RegisterDto registerDto) throws UserExistsException {
@@ -60,7 +58,7 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
         }
     }
 
-    public Role getOrCreateUserRole() {
+    private Role getOrCreateUserRole() {
         return roleRepository.findByName("USER").orElseGet(() -> {
             Role newRole = new Role();
             newRole.setName("USER");
@@ -79,18 +77,17 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
         return newUser;
     }
 
-    private void embedRefreshToken(User user, String refreshToken) {
-        RefreshToken embeddedRefreshToken = new RefreshToken();
-        embeddedRefreshToken.setRefreshToken(refreshToken);
-        embeddedRefreshToken.setExpiryDate(LocalDateTime.now().plusHours(2));
-        user.setRefreshToken(embeddedRefreshToken);
+    private void embedRefreshToken(User user, String refreshTokenString) {
+        LocalDateTime expiryDate = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
+        RefreshToken refreshToken = new RefreshToken(refreshTokenString, expiryDate);
+        user.setRefreshToken(refreshToken);
     }
 
-    private SuccessAuthenticationDto buildSuccessResponse(String accessToken, String refreshToken) {
+    private SuccessAuthenticationDto buildSuccessResponse(String accessToken, RefreshToken refreshToken) {
         SuccessAuthenticationDto response = new SuccessAuthenticationDto();
         response.setRequestId(UUID.randomUUID().toString());
         response.setToken(accessToken);
-        response.setRefreshToken(refreshToken);
+        response.setRefreshToken(refreshToken.getRefreshToken());
         return response;
     }
 }

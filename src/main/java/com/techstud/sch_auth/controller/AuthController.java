@@ -4,6 +4,7 @@ import com.techstud.sch_auth.config.JwtProperties;
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
+import com.techstud.sch_auth.entity.RefreshToken;
 import com.techstud.sch_auth.service.AuthFacade;
 import com.techstud.sch_auth.swagger.BadCredentialsResponse;
 import com.techstud.sch_auth.swagger.UserAlreadyExistResponse;
@@ -87,7 +88,6 @@ public class AuthController {
     )
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
-        log.info("Received login request: {}", loginDto);
         SuccessAuthenticationDto response = authFacade.login(loginDto);
 
         ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie("accessToken",
@@ -152,5 +152,48 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
                 .body(response);
+    }
+
+    @Operation(
+            summary = "Обновление access токена",
+            description = "Обновляет access токен с использованием переданного refresh токена. " +
+                    "HttpOnly cookie с новым access токеном возвращается в заголовке ответа.",
+            tags = {"Authentication"},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Refresh токен",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(example = "{\"refreshToken\":\"your_refresh_token\"}")
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Access токен успешно обновлён",
+                            headers = {
+                                    @Header(name = "Set-Cookie", description = "HttpOnly cookie содержит новый access токен")
+                            }
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Refresh токен недействителен или истёк",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(example = "{\"error\":\"Invalid or expired refresh token\"}")
+                            )
+                    )
+            }
+    )
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshToken refreshTokenRequest) {
+        String accessToken = authFacade.refreshToken(refreshTokenRequest);
+
+        ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie(
+                "accessToken", accessToken, jwtProperties.getAccessTokenExpiration(), true);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .body("Successfully refreshed token");
     }
 }

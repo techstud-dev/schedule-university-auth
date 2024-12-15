@@ -2,10 +2,10 @@ package com.techstud.sch_auth.service;
 
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
+import com.techstud.sch_auth.entity.RefreshToken;
 import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.exception.BadCredentialsException;
 import com.techstud.sch_auth.exception.UserNotFoundException;
-import com.techstud.sch_auth.repository.RoleRepository;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.JwtGenerateService;
 import com.techstud.sch_auth.service.impl.LoginServiceImpl;
@@ -13,91 +13,89 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class LoginServiceImplTest {
+class LoginServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private RoleRepository roleRepository;
-
-    @Mock
     private JwtGenerateService jwtGenerateService;
+
+    @Mock
+    private BCryptPasswordEncoder passwordEncoder;
 
     @InjectMocks
     private LoginServiceImpl loginService;
 
     @Test
-    public void testLogin_Success() {
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-        LoginServiceImpl loginService = new LoginServiceImpl(userRepository, roleRepository, jwtGenerateService, passwordEncoder);
-
-        LoginDto request = new LoginDto();
-        request.setIdentificationField("kabarx@gmail.com");
-        request.setPassword("passwordSome");
-
+    void processLogin_ShouldReturnSuccessResponse_WhenCredentialsAreValid() {
+        LoginDto loginDto = new LoginDto("username", "password");
         User user = new User();
-        user.setEmail("kabarx@gmail.com");
-        user.setPassword(passwordEncoder.encode("passwordSome"));
+        user.setPassword("hashedPassword");
+        RefreshToken refreshToken = new RefreshToken("refresh-token", LocalDateTime.now().plusDays(30));
+        user.setRefreshToken(refreshToken);
 
-        when(userRepository.existsByUniqueFields("kabarx@gmail.com", "kabarx@gmail.com", "kabarx@gmail.com")).thenReturn(true);
-        when(userRepository.findByEmailIgnoreCase("kabarx@gmail.com")).thenReturn(Optional.of(user));
-        when(jwtGenerateService.generateToken(user)).thenReturn("accessToken");
-        when(jwtGenerateService.generateRefreshToken(user)).thenReturn("refreshToken");
+        when(userRepository.findByUsernameIgnoreCase("username"))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password", "hashedPassword"))
+                .thenReturn(true);
+        when(jwtGenerateService.generateToken(user, 1))
+                .thenReturn("access-token");
+        when(jwtGenerateService.generateRefreshToken(user, 2))
+                .thenReturn("new-refresh-token");
 
-        SuccessAuthenticationDto response = loginService.processLogin(request);
+        SuccessAuthenticationDto response = loginService.processLogin(loginDto);
 
         assertNotNull(response);
-        assertEquals("accessToken", response.getToken());
-        assertEquals("refreshToken", response.getRefreshToken());
+        assertEquals("access-token", response.getToken());
+        assertEquals("new-refresh-token", response.getRefreshToken());
+        verify(userRepository).save(user);
     }
 
     @Test
-    public void testLogin_UserNotFound() {
-        LoginDto loginDto = new LoginDto();
-        loginDto.setIdentificationField("user@example.com");
+    void processLogin_ShouldThrowException_WhenUserNotFound() {
+        LoginDto loginDto = new LoginDto("nonexistent", "password");
 
-        when(userRepository.existsByUniqueFields("user@example.com", "user@example.com", "user@example.com")).thenReturn(false);
+        when(userRepository.findByUsernameIgnoreCase("nonexistent"))
+                .thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> loginService.processLogin(loginDto));
+
+        verify(userRepository).findByUsernameIgnoreCase("nonexistent");
+        verifyNoInteractions(jwtGenerateService, passwordEncoder);
     }
 
     @Test
-    public void testLogin_InvalidPassword() {
-        LoginDto loginDto = new LoginDto();
-        loginDto.setIdentificationField("user@example.com");
-        loginDto.setPassword("wrongPassword");
-
+    void processLogin_ShouldThrowException_WhenPasswordIsInvalid() {
+        // Arrange
+        LoginDto loginDto = new LoginDto("username", "wrongPassword");
         User user = new User();
-        user.setEmail("user@example.com");
         user.setPassword("hashedPassword");
 
-        when(userRepository.existsByUniqueFields("user@example.com", "user@example.com", "user@example.com")).thenReturn(true);
-        when(userRepository.findByEmailIgnoreCase("user@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameIgnoreCase("username"))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongPassword", "hashedPassword"))
+                .thenReturn(false);
 
-        lenient().when(passwordEncoder.matches("wrongPassword", "hashedPassword")).thenReturn(false);
+        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(loginDto));
 
-        assertThrows(BadCredentialsException.class, () -> {
-            loginService.processLogin(loginDto);
-        });
+        verify(passwordEncoder).matches("wrongPassword", "hashedPassword");
+        verifyNoInteractions(jwtGenerateService);
+    }
+
+    @Test
+    void processLogin_ShouldThrowException_WhenIdentificationFieldIsNullOrEmpty() {
+        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(new LoginDto(null, "password")));
+        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(new LoginDto(" ", "password")));
     }
 }

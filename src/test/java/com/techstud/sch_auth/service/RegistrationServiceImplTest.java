@@ -9,19 +9,21 @@ import com.techstud.sch_auth.repository.RoleRepository;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.JwtGenerateService;
 import com.techstud.sch_auth.service.impl.RegistrationServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-public class RegistrationServiceImplTest {
+@Nested
+class RegistrationServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
@@ -38,91 +40,94 @@ public class RegistrationServiceImplTest {
     @InjectMocks
     private RegistrationServiceImpl registrationService;
 
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
-    void processRegister_shouldRegisterNewUser() throws UserExistsException {
-        RegisterDto request = new RegisterDto();
-        request.setUsername("testuser");
-        request.setEmail("test@example.com");
-        request.setPhoneNumber("1234567890");
-        request.setPassword("password");
+    void processRegister_ShouldCreateNewUser_WhenUserIsUnique() throws UserExistsException {
+        RegisterDto registerDto = new RegisterDto("username", "password", "email@test.com", "1234567890");
+
+        when(userRepository.existsByUniqueFields("username", "email@test.com", "1234567890"))
+                .thenReturn(false);
 
         Role userRole = new Role();
         userRole.setName("USER");
+        when(roleRepository.findByName("USER"))
+                .thenReturn(Optional.of(userRole));
 
         User newUser = new User();
-        newUser.setUsername(request.getUsername());
-        newUser.setEmail(request.getEmail());
-        newUser.setPhoneNumber(request.getPhoneNumber());
-        newUser.setPassword(request.getPassword());
+        newUser.setUsername("username");
+        newUser.setEmail("email@test.com");
+        newUser.setPhoneNumber("1234567890");
         newUser.setRole(userRole);
 
-        String accessToken = "mockedAccessToken";
-        String refreshToken = "mockedRefreshToken";
-
-        Mockito.when(userRepository.existsByUniqueFields(
-                request.getUsername(),
-                        request.getEmail(),
-                        request.getPhoneNumber()))
-                .thenReturn(false);
-        Mockito.when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        Mockito.when(userFactory.createUser(
-                        Mockito.eq(request.getUsername()),
-                        Mockito.eq(request.getPassword()),
-                        Mockito.eq(request.getEmail()),
-                        Mockito.eq(request.getPhoneNumber())))
+        when(userFactory.createUser(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(newUser);
-        Mockito.when(jwtGenerateService.generateToken(newUser)).thenReturn(accessToken);
-        Mockito.when(jwtGenerateService.generateRefreshToken(newUser)).thenReturn(refreshToken);
 
-        SuccessAuthenticationDto result = registrationService.processRegister(request);
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+        when(jwtGenerateService.generateToken(newUser, 1)).thenReturn(accessToken);
+        when(jwtGenerateService.generateRefreshToken(newUser, 2)).thenReturn(refreshToken);
 
-        Mockito.verify(userRepository).save(newUser);
-        assertNotNull(result);
-        assertEquals(accessToken, result.getToken());
-        assertEquals(refreshToken, result.getRefreshToken());
+        SuccessAuthenticationDto response = registrationService.processRegister(registerDto);
+
+        assertNotNull(response);
+        assertEquals(accessToken, response.getToken());
+        assertEquals(refreshToken, response.getRefreshToken());
+
+        verify(userRepository).save(newUser);
     }
 
     @Test
-    void processRegister_shouldThrowExceptionWhenUserExists() {
-        RegisterDto request = new RegisterDto();
-        request.setUsername("testuser");
-        request.setEmail("test@example.com");
-        request.setPhoneNumber("1234567890");
+    void processRegister_ShouldCreateNewRole_WhenRoleDoesNotExist() throws UserExistsException {
+        RegisterDto registerDto = new RegisterDto("username", "password", "email@test.com", "1234567890");
 
-        Mockito.when(userRepository.existsByUniqueFields(request.getUsername(), request.getEmail(), request.getPhoneNumber()))
+        when(userRepository.existsByUniqueFields("username", "email@test.com", "1234567890"))
+                .thenReturn(false);
+
+        when(roleRepository.findByName("USER"))
+                .thenReturn(Optional.empty());
+
+        Role newRole = new Role();
+        newRole.setName("USER");
+        when(roleRepository.save(any(Role.class)))
+                .thenReturn(newRole);
+
+        User newUser = new User();
+        newUser.setUsername("username");
+        newUser.setEmail("email@test.com");
+        newUser.setPhoneNumber("1234567890");
+        newUser.setRole(newRole);
+
+        when(userFactory.createUser(anyString(), anyString(), anyString(), anyString()))
+                .thenReturn(newUser);
+
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+        when(jwtGenerateService.generateToken(newUser, 1)).thenReturn(accessToken);
+        when(jwtGenerateService.generateRefreshToken(newUser, 2)).thenReturn(refreshToken);
+
+        SuccessAuthenticationDto response = registrationService.processRegister(registerDto);
+
+        assertNotNull(response);
+        assertEquals(accessToken, response.getToken());
+        assertEquals(refreshToken, response.getRefreshToken());
+
+        verify(roleRepository).save(any(Role.class));
+        verify(userRepository).save(newUser);
+    }
+
+    @Test
+    void processRegister_ShouldThrowException_WhenUserAlreadyExists() {
+        RegisterDto registerDto = new RegisterDto("username", "password", "email@test.com", "1234567890");
+
+        when(userRepository.existsByUniqueFields("username", "email@test.com", "1234567890"))
                 .thenReturn(true);
 
-        assertThrows(UserExistsException.class, () -> registrationService.processRegister(request));
-    }
+        assertThrows(UserExistsException.class, () -> registrationService.processRegister(registerDto));
 
-    @Test
-    void processRegister_shouldCreateNewRoleIfNotExists() {
-        String roleName = "USER";
-
-        Mockito.when(roleRepository.findByName(roleName)).thenReturn(Optional.empty());
-        Role role = new Role();
-        role.setName(roleName);
-        Mockito.when(roleRepository.save(Mockito.any(Role.class))).thenReturn(role);
-
-        Role result = registrationService.getOrCreateUserRole();
-
-        Mockito.verify(roleRepository).save(Mockito.any(Role.class));
-        assertNotNull(result);
-        assertEquals(roleName, result.getName());
-    }
-
-    @Test
-    void  getOrCreateUserRole_shouldReturnExistingRole() {
-        String roleName = "USER";
-        Role existingRole = new Role();
-        existingRole.setName(roleName);
-
-        Mockito.when(roleRepository.findByName(roleName)).thenReturn(Optional.of(existingRole));
-
-        Role result = registrationService.getOrCreateUserRole();
-
-        Mockito.verify(roleRepository, Mockito.never()).save(Mockito.any(Role.class));
-        assertNotNull(result);
-        assertEquals(roleName, result.getName());
+        verify(userRepository, never()).save(any(User.class));
     }
 }

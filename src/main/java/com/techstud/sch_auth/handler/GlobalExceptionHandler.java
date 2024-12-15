@@ -1,5 +1,6 @@
 package com.techstud.sch_auth.handler;
 
+import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -65,5 +66,16 @@ public class GlobalExceptionHandler {
         response.put("error", e.getMessage());
         log.error("User already exists exception", e);
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(InvalidJwtTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<Map<String, String>> handleInvalidJwtTokenException(InvalidJwtTokenException e) {
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("systemName", systemName);
+        response.put("applicationName", applicationName);
+        response.put("error", e.getMessage());
+        log.error("Jwt token is invalid", e);
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 }
