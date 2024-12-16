@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Slf4j
-@Service("LOGIN_SERVICE")
+@Service
 public class LoginServiceImpl extends AbstractAuthService implements LoginService {
 
     private final BCryptPasswordEncoder passwordEncoder;
@@ -41,15 +41,16 @@ public class LoginServiceImpl extends AbstractAuthService implements LoginServic
 
         User user = findUserByIdentificationFields(loginDto);
 
-        if (!passwordValidation(loginDto.getPassword(), user.getPassword()))
+        if (!passwordValidation(loginDto.getPassword(), user.getPassword())) {
             throw new BadCredentialsException();
-
+        }
         String accessToken = jwtGenerateService.generateToken(user, 1);
         String refreshTokenString = jwtGenerateService.generateRefreshToken(user, 2);
 
         embedRefreshToken(user, refreshTokenString);
         userRepository.save(user);
 
+        log.info("Request id: {} already logged in", loginDto.getRequestId());
         return buildSuccessResponse(accessToken, user.getRefreshToken());
     }
 
@@ -63,9 +64,9 @@ public class LoginServiceImpl extends AbstractAuthService implements LoginServic
     }
 
     private boolean passwordValidation(String password, String hashedPassword) {
-        if (password == null)
+        if (password == null) {
             throw new BadCredentialsException();
-
+        }
         return passwordEncoder.matches(password, hashedPassword);
     }
 

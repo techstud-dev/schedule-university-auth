@@ -15,16 +15,6 @@ spring:
   liquibase:
     enabled: true
 
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: alpha
-    tagsSorter: alpha
-    display-request-duration: true
-    disable-swagger-default-url: false
-
 server:
   port: 8082
 

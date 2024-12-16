@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -35,9 +34,9 @@ public class AuthController {
     private final AuthFacade authFacade;
     private final CookieUtil cookieUtil;
 
-    public AuthController(@Qualifier("JWT_PROPERTIES") JwtProperties jwtProperties,
-                          @Qualifier("AUTH_FACADE") AuthFacade authFacade,
-                          @Qualifier("COOKIE_UTIL") CookieUtil cookieUtil) {
+    public AuthController(JwtProperties jwtProperties,
+                          AuthFacade authFacade,
+                          CookieUtil cookieUtil) {
         this.jwtProperties = jwtProperties;
         this.authFacade = authFacade;
         this.cookieUtil = cookieUtil;

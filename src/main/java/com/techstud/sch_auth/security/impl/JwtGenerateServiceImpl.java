@@ -5,6 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.techstud.sch_auth.entity.Role;
 import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.security.JwtGenerateService;
@@ -40,20 +41,26 @@ public class JwtGenerateServiceImpl implements JwtGenerateService {
     @Override
     public String generateToken(User user, long expirationHours) {
         return JWT.create()
+                .withIssuer("auth")
+                .withAudience("main")
                 .withSubject(user.getUsername())
-                .withClaim("role", user.getRole().getAuthority())
+                .withClaim("type", "access")
+                .withArrayClaim("roles", user.getRoles().stream()
+                        .map(Role::getAuthority).toArray(String[]::new))
                 .withIssuedAt(Date.from(Instant.now()))
                 .withExpiresAt(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))
                 .sign(algorithm);
     }
 
     @Override
-    public String generateRefreshToken(User user, long expirationDays) {
+    public String generateRefreshToken(User user, long expirationHours) {
         return JWT.create()
+                .withIssuer("auth")
+                .withAudience("main")
                 .withSubject(user.getUsername())
-                .withIssuedAt(Date.from(Instant.now()))
-                .withExpiresAt(Date.from(Instant.now().plus(expirationDays, ChronoUnit.DAYS)))
                 .withClaim("type", "refresh")
+                .withIssuedAt(Date.from(Instant.now()))
+                .withExpiresAt(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))
                 .sign(algorithm);
     }
 
@@ -66,8 +73,7 @@ public class JwtGenerateServiceImpl implements JwtGenerateService {
 
             return verifier.verify(token);
         } catch (JWTVerificationException e) {
-            log.error("Invalid or expired token: {}", token, e);
-            throw new InvalidJwtTokenException("Токен просрочен или неверен!");
+            throw new InvalidJwtTokenException();
         }
     }
 }

@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -61,7 +62,7 @@ class RegistrationServiceImplTest {
         newUser.setUsername("username");
         newUser.setEmail("email@test.com");
         newUser.setPhoneNumber("1234567890");
-        newUser.setRole(userRole);
+        newUser.setRoles(Set.of(userRole));
 
         when(userFactory.createUser(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(newUser);
@@ -99,7 +100,7 @@ class RegistrationServiceImplTest {
         newUser.setUsername("username");
         newUser.setEmail("email@test.com");
         newUser.setPhoneNumber("1234567890");
-        newUser.setRole(newRole);
+        newUser.setRoles(Set.of(newRole));
 
         when(userFactory.createUser(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(newUser);

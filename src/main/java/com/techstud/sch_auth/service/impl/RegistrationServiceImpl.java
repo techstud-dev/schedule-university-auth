@@ -17,10 +17,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
-@Service("REGISTRATION_SERVICE")
+@Service
 public class RegistrationServiceImpl extends AbstractAuthService implements RegistrationService {
 
     private final UserFactory userFactory;
@@ -46,6 +47,7 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
         embedRefreshToken(newUser, refreshTokenString);
         userRepository.save(newUser);
 
+        log.info("User with username {} registered", newUser.getUsername());
         return buildSuccessResponse(accessToken, newUser.getRefreshToken());
     }
 
@@ -73,7 +75,7 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
                 registerDto.getEmail(),
                 registerDto.getPhoneNumber()
         );
-        newUser.setRole(userRole);
+        newUser.setRoles(Set.of(userRole));
         return newUser;
     }
 

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class UserNotFoundException extends RuntimeException {
 
-    private static final String standardMessage = "Пользователь с такими данными не найден";
+    private static final String standardMessage = "User with these credentials not found";
 
     public UserNotFoundException() {
         super(standardMessage);

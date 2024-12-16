@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
-      file: "db/changelog/2024/2024-13-12-create-table.yaml"
+      file: "db/changelog/2024/2024-12-13-create-table.yaml"
+  - include:
+      file: "db/changelog/2024/2024-12-16-create-table.yaml"

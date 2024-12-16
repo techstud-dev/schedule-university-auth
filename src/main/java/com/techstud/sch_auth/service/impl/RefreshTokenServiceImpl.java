@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 
 @Slf4j
-@Service("REFRESH-TOKEN-SERVICE")
+@Service
 public class RefreshTokenServiceImpl extends AbstractAuthService implements RefreshTokenService {
 
     public RefreshTokenServiceImpl(UserRepository userRepository,
@@ -26,17 +26,19 @@ public class RefreshTokenServiceImpl extends AbstractAuthService implements Refr
 
     @Override
     public String refreshToken(RefreshToken refreshToken) {
-        DecodedJWT decodedJWT = jwtGenerateService.verifyToken(refreshToken.getRefreshToken(), "refresh");
+        DecodedJWT decodedJWT = jwtGenerateService
+                .verifyToken(refreshToken.getRefreshToken(), "refresh");
 
         String username = decodedJWT.getSubject();
         Instant tokenExpiry = decodedJWT.getExpiresAt().toInstant();
 
-        if (tokenExpiry.isBefore(Instant.now()))
+        if (tokenExpiry.isBefore(Instant.now())) {
             throw new InvalidJwtTokenException();
-
+        }
         User user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> {
-                    log.error("User not found for username in token: {}", username);
+                    log.error("Failed to find user with username" +
+                            " extracted from the refresh token: {}", username);
                     return new InvalidJwtTokenException();
                 });
 

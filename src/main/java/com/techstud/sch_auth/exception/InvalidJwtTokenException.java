@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
 public class InvalidJwtTokenException extends RuntimeException {
 
-    private static final String standardMessage = "Токен просрочен или неверен!";
+    private static final String standardMessage = "Token expired or incorrect";
 
     public InvalidJwtTokenException() {
         super(standardMessage);

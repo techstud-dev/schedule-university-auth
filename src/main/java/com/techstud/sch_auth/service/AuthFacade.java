@@ -4,19 +4,18 @@ import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-@Component("AUTH_FACADE")
+@Component
 public class AuthFacade {
 
     private final LoginService loginService;
     private final RegistrationService registrationService;
     private final RefreshTokenService refreshTokenService;
 
-    public AuthFacade(@Qualifier("LOGIN_SERVICE") LoginService loginService,
-                      @Qualifier("REGISTRATION_SERVICE") RegistrationService registrationService,
-                      @Qualifier("REFRESH-TOKEN-SERVICE") RefreshTokenService refreshTokenService) {
+    public AuthFacade(LoginService loginService,
+                      RegistrationService registrationService,
+                      RefreshTokenService refreshTokenService) {
         this.loginService = loginService;
         this.registrationService = registrationService;
         this.refreshTokenService = refreshTokenService;

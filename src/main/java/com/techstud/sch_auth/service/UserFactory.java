@@ -8,7 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
-@Service("USER_FACTORY")
+@Service
 @Slf4j
 public class UserFactory {
 

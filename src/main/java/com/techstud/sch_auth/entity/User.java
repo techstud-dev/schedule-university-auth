@@ -1,20 +1,22 @@
 package com.techstud.sch_auth.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
+import java.sql.Timestamp;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
 @Entity
 @Builder
+@Getter
 @AllArgsConstructor
 @Table(name = "users")
 public class User implements UserDetails {
@@ -35,16 +37,29 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String phoneNumber;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
 
     @Embedded
     private RefreshToken refreshToken;
 
+    @Column(nullable = false, updatable = false)
+    @CreationTimestamp
+    private Timestamp createdAt;
+
+    @Column(nullable = false)
+    @UpdateTimestamp
+    private Timestamp modifiedAt;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(role);
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
+                .collect(Collectors.toList());
     }
-
 }
