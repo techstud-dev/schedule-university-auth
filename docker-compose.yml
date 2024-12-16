@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  sch-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sch-auth-container
+    environment:
+        DB_HOST: postgres
+        DB_PORT: 5432
+        DB_NAME: schedule_university_auth
+        DB_USER: abuser
+        DB_PASSWORD: abuser
+    ports:
+      - "8082:8082"
+    networks:
+      backend:
+
+  postgres:
+    image: postgres:17
+    container_name: schedule_university_auth_DB
+    environment:
+      POSTGRES_USER: abuser
+      POSTGRES_PASSWORD: abuser
+      POSTGRES_DB: schedule_university_auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      backend:
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
