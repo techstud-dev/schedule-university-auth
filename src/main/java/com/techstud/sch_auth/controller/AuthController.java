@@ -3,6 +3,7 @@ package com.techstud.sch_auth.controller;
 import com.techstud.sch_auth.config.JwtProperties;
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
+import com.techstud.sch_auth.dto.ServiceDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
 import com.techstud.sch_auth.service.AuthFacade;
@@ -20,10 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Objects;
 
 @Slf4j
 @RestController
@@ -106,7 +110,7 @@ public class AuthController {
             }
     )
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<SuccessAuthenticationDto> login(@RequestBody LoginDto loginDto) {
         SuccessAuthenticationDto response = authFacade.login(loginDto);
 
         ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie("accessToken",
@@ -198,7 +202,7 @@ public class AuthController {
             }
     )
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterDto registerDto) {
+    public ResponseEntity<SuccessAuthenticationDto> register(@RequestBody RegisterDto registerDto) {
         SuccessAuthenticationDto response = authFacade.register(registerDto);
 
         ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie("accessToken",
@@ -280,7 +284,7 @@ public class AuthController {
             }
     )
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshToken refreshTokenRequest) {
+    public ResponseEntity<String> refreshToken(@RequestBody RefreshToken refreshTokenRequest) {
         String accessToken = authFacade.refreshToken(refreshTokenRequest);
 
         ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie(
@@ -290,4 +294,21 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
                 .body("Successfully refreshed token");
     }
+
+    @PreAuthorize("hasRole('SERVICE')")
+    @PostMapping("/generate-tokens")
+    public ResponseEntity<?> generateTokensForServices(@RequestBody ServiceDto info) {
+        if (info == null || info.getName() == null || info.getRole() == null) {
+            return ResponseEntity.badRequest().body("Invalid service information");
+        }
+
+        String accessToken = authFacade.generateAccessTokenSimple();
+        String refreshToken = authFacade.generateRefreshTokenSimple();
+
+        return ResponseEntity.ok()
+                .header("Access-Token", accessToken)
+                .header("Refresh-Token", refreshToken)
+                .body("Successfully generated tokens for service: " + info.getName());
+    }
+
 }

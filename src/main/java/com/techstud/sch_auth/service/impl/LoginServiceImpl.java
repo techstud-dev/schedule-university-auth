@@ -55,7 +55,7 @@ public class LoginServiceImpl extends AbstractAuthService implements LoginServic
     }
 
     private User findUserByIdentificationFields(LoginDto loginDto) {
-        String identificationField = loginDto.getIdentificationField().trim();
+        String identificationField = loginDto.getIdentificationField();
 
         return userRepository.findByUsernameIgnoreCase(identificationField)
                 .or(() -> userRepository.findByEmailIgnoreCase(identificationField))
@@ -71,7 +71,7 @@ public class LoginServiceImpl extends AbstractAuthService implements LoginServic
     }
 
     private void embedRefreshToken(User user, String refreshTokenString) {
-        LocalDateTime expiryDate = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime expiryDate = LocalDateTime.now().plusHours(2).truncatedTo(ChronoUnit.SECONDS);
         RefreshToken refreshToken = new RefreshToken(refreshTokenString, expiryDate);
         user.setRefreshToken(refreshToken);
     }

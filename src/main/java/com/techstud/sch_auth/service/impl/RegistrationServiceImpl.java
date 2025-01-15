@@ -80,7 +80,7 @@ public class RegistrationServiceImpl extends AbstractAuthService implements Regi
     }
 
     private void embedRefreshToken(User user, String refreshTokenString) {
-        LocalDateTime expiryDate = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime expiryDate = LocalDateTime.now().plusHours(2).truncatedTo(ChronoUnit.SECONDS);
         RefreshToken refreshToken = new RefreshToken(refreshTokenString, expiryDate);
         user.setRefreshToken(refreshToken);
     }

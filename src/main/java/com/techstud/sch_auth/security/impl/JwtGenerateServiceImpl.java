@@ -48,7 +48,7 @@ public class JwtGenerateServiceImpl implements JwtGenerateService {
                 .withArrayClaim("roles", user.getRoles().stream()
                         .map(Role::getAuthority).toArray(String[]::new))
                 .withIssuedAt(Date.from(Instant.now()))
-                .withExpiresAt(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))
+                .withExpiresAt(Date.from(Instant.now().plus(expirationHours / 3600, ChronoUnit.HOURS)))
                 .sign(algorithm);
     }
 
@@ -60,7 +60,29 @@ public class JwtGenerateServiceImpl implements JwtGenerateService {
                 .withSubject(user.getUsername())
                 .withClaim("type", "refresh")
                 .withIssuedAt(Date.from(Instant.now()))
-                .withExpiresAt(Date.from(Instant.now().plus(expirationHours, ChronoUnit.HOURS)))
+                .withExpiresAt(Date.from(Instant.now().plus(expirationHours / 3600, ChronoUnit.HOURS)))
+                .sign(algorithm);
+    }
+
+    @Override
+    public String generateToken() {
+        return JWT.create()
+                .withIssuer("auth")
+                .withAudience("services")
+                .withClaim("type", "access")
+                .withIssuedAt(Date.from(Instant.now()))
+                .withExpiresAt(Date.from(Instant.now().plus(15, ChronoUnit.MINUTES)))
+                .sign(algorithm);
+    }
+
+    @Override
+    public String generateRefreshToken() {
+        return JWT.create()
+                .withIssuer("auth")
+                .withAudience("services")
+                .withClaim("type", "refresh")
+                .withIssuedAt(Date.from(Instant.now()))
+                .withExpiresAt(Date.from(Instant.now().plus(2, ChronoUnit.HOURS)))
                 .sign(algorithm);
     }
 

@@ -11,4 +11,7 @@ public interface JwtGenerateService {
 
     DecodedJWT verifyToken(String token, String expectedClaimType);
 
+    String generateToken();
+
+    String generateRefreshToken();
 }

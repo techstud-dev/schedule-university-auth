@@ -23,8 +23,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**")
+                                .requestMatchers("/register", "/login", "/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**")
                                 .permitAll()
+                                .requestMatchers("/generate-service-tokens")
+                                .hasRole("SERVICE")
                                 .anyRequest()
                                 .authenticated())
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
