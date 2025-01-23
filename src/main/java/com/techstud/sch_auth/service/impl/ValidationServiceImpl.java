@@ -29,20 +29,25 @@ public class ValidationServiceImpl implements ValidationService {
             throw new ValidationException("Register form cannot be null.");
         }
         if (StringUtils.isBlank(registerDto.getEmail())) {
-            log.error("Email is blank");
+            log.error("Email is blank, request: {}", registerDto.getRequestId());
             throw new ValidationException("Email cannot be blank.");
         }
-        if (!registerDto.getEmail().matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$")) {
-            log.error("Email format is invalid");
+        if (!registerDto.getEmail().matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")
+                || StringUtils.isBlank(registerDto.getEmail())) {
+            log.error("Email format is invalid, request: {}", registerDto.getRequestId());
             throw new ValidationException("Email format is invalid.");
         }
         if (StringUtils.isBlank(registerDto.getPassword()) || registerDto.getPassword().length() < 8) {
-            log.error("Password is invalid");
+            log.error("Password is invalid, request: {}", registerDto.getRequestId());
             throw new ValidationException("Password must be at least 8 characters.");
         }
         if (StringUtils.isBlank(registerDto.getUsername())) {
-            log.error("Username is blank");
+            log.error("Username is blank, request: {}", registerDto.getRequestId());
             throw new ValidationException("Username cannot be blank.");
+        }
+        if (StringUtils.isBlank(registerDto.getPhoneNumber())) {
+            log.error("Phone number is invalid, request: {}", registerDto.getRequestId());
+            throw new ValidationException("Phone number is invalid.");
         }
     }
 
