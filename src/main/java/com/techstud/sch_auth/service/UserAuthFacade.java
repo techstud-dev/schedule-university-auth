@@ -4,44 +4,32 @@ import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
-import com.techstud.sch_auth.security.JwtGenerateService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
-public class AuthFacade {
+@RequiredArgsConstructor
+public class UserAuthFacade {
 
     private final LoginService loginService;
     private final RegistrationService registrationService;
     private final RefreshTokenService refreshTokenService;
-    private final JwtGenerateService jwtGenerateService;
-
-    public AuthFacade(LoginService loginService,
-                      RegistrationService registrationService,
-                      RefreshTokenService refreshTokenService,
-                      JwtGenerateService jwtGenerateService) {
-        this.loginService = loginService;
-        this.registrationService = registrationService;
-        this.refreshTokenService = refreshTokenService;
-        this.jwtGenerateService = jwtGenerateService;
-    }
+    private final ValidationService validationService;
 
     public SuccessAuthenticationDto register(RegisterDto request) {
+        validationService.validateRegister(request);
         return registrationService.processRegister(request);
     }
 
     public SuccessAuthenticationDto login(LoginDto request) {
+        validationService.validateLogin(request);
         return loginService.processLogin(request);
     }
 
     public String refreshToken(RefreshToken refreshToken) {
+        validationService.validateAndDecodeToken(refreshToken.getRefreshToken(), "refresh");
         return refreshTokenService.refreshToken(refreshToken);
-    }
-
-    public String generateRefreshTokenSimple() {
-        return jwtGenerateService.generateRefreshToken();
-    }
-
-    public String generateAccessTokenSimple() {
-        return jwtGenerateService.generateToken();
     }
 }

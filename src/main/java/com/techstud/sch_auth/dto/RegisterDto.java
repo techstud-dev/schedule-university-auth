@@ -1,27 +1,25 @@
 package com.techstud.sch_auth.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 import java.util.UUID;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RegisterDto {
 
-    private String requestId = UUID.randomUUID().toString();
-    private String username;
-    private String password;
-    private String email;
-    private String phoneNumber;
+    private final String requestId;
+    private final String username;
+    private final String password;
+    private final String email;
+    private final String phoneNumber;
 
-    public RegisterDto(String username, String password, String email, String phoneNumber) {
+    public RegisterDto(@NonNull String username, @NonNull String password,
+                       @NonNull String email, @NonNull String phoneNumber) {
+        this.requestId = UUID.randomUUID().toString();
         this.username = username;
         this.password = password;
         this.email = email;
         this.phoneNumber = phoneNumber;
     }
-
 }

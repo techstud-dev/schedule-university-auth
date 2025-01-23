@@ -1,14 +1,18 @@
 package com.techstud.sch_auth.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
+import java.util.UUID;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ServiceDto {
 
-    private String role;
-    private String name;
+    private final String requestId;
+    private final String name;
+
+    public ServiceDto(@NonNull String name) {
+        this.requestId = UUID.randomUUID().toString();
+        this.name = name;
+    }
 }

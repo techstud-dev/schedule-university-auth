@@ -7,7 +7,7 @@ import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.repository.RoleRepository;
 import com.techstud.sch_auth.repository.UserRepository;
-import com.techstud.sch_auth.security.JwtGenerateService;
+import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.impl.RegistrationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -33,7 +33,7 @@ class RegistrationServiceImplTest {
     private RoleRepository roleRepository;
 
     @Mock
-    private JwtGenerateService jwtGenerateService;
+    private TokenService jwtGenerateService;
 
     @Mock
     private UserFactory userFactory;
@@ -53,7 +53,7 @@ class RegistrationServiceImplTest {
         when(userRepository.existsByUniqueFields("username", "email@test.com", "1234567890"))
                 .thenReturn(false);
 
-        Role userRole = new Role();
+        Role userRole = new Role("USER");
         userRole.setName("USER");
         when(roleRepository.findByName("USER"))
                 .thenReturn(Optional.of(userRole));
@@ -91,7 +91,7 @@ class RegistrationServiceImplTest {
         when(roleRepository.findByName("USER"))
                 .thenReturn(Optional.empty());
 
-        Role newRole = new Role();
+        Role newRole = new Role("USER");
         newRole.setName("USER");
         when(roleRepository.save(any(Role.class)))
                 .thenReturn(newRole);

@@ -7,13 +7,14 @@ services:
       dockerfile: Dockerfile
     container_name: sch-auth-container
     environment:
-        DB_HOST: postgres
-        DB_PORT: 5432
-        DB_NAME: schedule_university_auth
-        DB_USER: abuser
-        DB_PASSWORD: abuser
+      DB_URL: jdbc:postgresql://postgres:5432/schedule_university_auth
+      DB_USER: abuser
+      DB_PASSWORD: abuser
+    volumes:
+      - ./src:/app/src
+      - ./pom.xml:/app/pom.xml
     ports:
-      - "8082:8082"
+      - "8083:8082"
     networks:
       backend:
 

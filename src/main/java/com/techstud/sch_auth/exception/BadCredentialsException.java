@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.UNAUTHORIZED)
 public class BadCredentialsException extends RuntimeException {
 
-    private static final String standardMessage = "Incorrect credentials";
+    private static final String STANDARD_MESSAGE = "Incorrect credentials";
 
     public BadCredentialsException() {
-        super(standardMessage);
+        super(STANDARD_MESSAGE);
     }
 }

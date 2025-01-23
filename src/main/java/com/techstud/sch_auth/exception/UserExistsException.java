@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.CONFLICT)
 public class UserExistsException extends RuntimeException {
 
-    private static final String standardMessage = "User with these credentials already exists";
+    private static final String STANDARD_MESSAGE = "User with these credentials already exists";
 
     public UserExistsException() {
-        super(standardMessage);
+        super(STANDARD_MESSAGE);
     }
 }
