@@ -24,7 +24,6 @@ public class ServiceAuthController {
 
     @PostMapping("/validate-service")
     public ResponseEntity<Void> validateAndAuthenticateService(@RequestHeader("Authorization") String token) {
-        log.debug("Received JWT token: {}", token);
         SuccessAuthenticationDto tokens = securityFacade.processAuthenticate(token);
 
         Map<String, String> headers = Map.of(
@@ -36,7 +35,6 @@ public class ServiceAuthController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<Void> refreshAccessServiceToken(@RequestHeader("Authorization") String token) {
-        log.debug("Received refresh token: {}", token);
         String accessToken = securityFacade.processRefreshToken(token);
 
         Map<String, String> headers = Map.of(

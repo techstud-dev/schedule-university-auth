@@ -50,9 +50,9 @@ class LoginServiceImplTest {
                 .thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword"))
                 .thenReturn(true);
-        when(jwtGenerateService.generateToken(user, 1))
+        when(jwtGenerateService.generateToken(eq(user), anyLong()))
                 .thenReturn("access-token");
-        when(jwtGenerateService.generateRefreshToken(user, 2))
+        when(jwtGenerateService.generateRefreshToken(eq(user), anyLong()))
                 .thenReturn("new-refresh-token");
 
         SuccessAuthenticationDto response = loginService.processLogin(loginDto);
@@ -78,7 +78,6 @@ class LoginServiceImplTest {
 
     @Test
     void processLogin_ShouldThrowException_WhenPasswordIsInvalid() {
-        // Arrange
         LoginDto loginDto = new LoginDto("username", "wrongPassword");
         User user = new User();
         user.setPassword("hashedPassword");
@@ -96,7 +95,7 @@ class LoginServiceImplTest {
 
     @Test
     void processLogin_ShouldThrowException_WhenIdentificationFieldIsNullOrEmpty() {
-        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(new LoginDto(null, "password")));
-        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(new LoginDto(" ", "password")));
+        assertThrows(UserNotFoundException.class, () -> loginService.processLogin(new LoginDto(null, "password")));
+        assertThrows(UserNotFoundException.class, () -> loginService.processLogin(new LoginDto(" ", "password")));
     }
 }

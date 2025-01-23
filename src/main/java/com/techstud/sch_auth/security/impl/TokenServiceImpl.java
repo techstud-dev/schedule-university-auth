@@ -48,7 +48,8 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public String generateToken(User user, long expirationHours) {
+    public String generateToken(User user, long expirationMinutes) {
+        log.info("Generating access token for: {}", user.getUsername());
         return JWT.create()
                 .withIssuer("sch-auth")
                 .withAudience("sch-main")
@@ -57,12 +58,13 @@ public class TokenServiceImpl implements TokenService {
                 .withArrayClaim("roles", user.getRoles().stream()
                         .map(Role::getAuthority).toArray(String[]::new))
                 .withIssuedAt(Date.from(Instant.now()))
-                .withExpiresAt(Date.from(Instant.now().plus(expirationHours, ChronoUnit.MINUTES)))
+                .withExpiresAt(Date.from(Instant.now().plus(expirationMinutes, ChronoUnit.MINUTES)))
                 .sign(authAlgorithm);
     }
 
     @Override
     public String generateRefreshToken(User user, long expirationHours) {
+        log.info("Generating refresh token for: {}", user.getUsername());
         return JWT.create()
                 .withIssuer("sch-auth")
                 .withAudience("sch-main")
@@ -75,7 +77,8 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public String generateToken(ServiceDto info) {
-        log.info("Generating access token for service: {}", info.getName());
+        log.info("Generating access token for service: {}, " +
+                "request: {}", info.getName(), info.getRequestId());
         return JWT.create()
                 .withIssuer("sch-auth")
                 .withAudience(info.getName())
@@ -87,7 +90,8 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public String generateRefreshToken(ServiceDto info) {
-        log.info("Generating refresh token for service: {}", info.getName());
+        log.info("Generating refresh token for service: {}, " +
+                "request: {}", info.getName(), info.getRequestId());
         return JWT.create()
                 .withIssuer("sch-auth")
                 .withAudience(info.getName())

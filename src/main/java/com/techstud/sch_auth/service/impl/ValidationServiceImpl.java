@@ -77,6 +77,10 @@ public class ValidationServiceImpl implements ValidationService {
         Algorithm algorithm = getAlgorithmForIssuer(issuer);
         DecodedJWT decodedJWT = verifyToken(token, algorithm);
 
+        if (decodedJWT == null) {
+            throw new InvalidJwtTokenException();
+        }
+
         validateToken(decodedJWT);
         validateTokenType(decodedJWT, expectedType);
     }
@@ -100,6 +104,10 @@ public class ValidationServiceImpl implements ValidationService {
 
     @Override
     public void validateIssuer(DecodedJWT decodedJWT) {
+        if (decodedJWT == null) {
+            throw new InvalidJwtTokenException();
+        }
+
         String issuer = decodedJWT.getIssuer();
         if (issuer == null || issuer.isEmpty()) {
             throw new InvalidJwtTokenException();

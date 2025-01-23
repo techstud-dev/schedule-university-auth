@@ -38,36 +38,40 @@ public class RefreshTokenServiceImplTest {
     @Test
     void testRefreshToken_Success() {
         Algorithm algorithm = Algorithm.HMAC256("test-secret");
-        when(jwtGenerateService.getAlgorithmForIssuer("sch-auth")).thenReturn(algorithm);
 
         RefreshToken refreshToken = new RefreshToken("validRefreshToken", Instant.now().plusSeconds(3600));
         DecodedJWT decodedJWT = mock(DecodedJWT.class);
         User testUser = new User();
         testUser.setUsername("testUser");
 
+        when(jwtGenerateService.getAlgorithmForIssuer("sch-auth")).thenReturn(algorithm);
         when(jwtGenerateService.verifyToken(eq(refreshToken.getRefreshToken()), eq(algorithm)))
                 .thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn("testUser");
-        when(decodedJWT.getExpiresAt()).thenReturn(Date.from(Instant.now().plusSeconds(3600)));
         when(userRepository.findByUsernameIgnoreCase("testUser")).thenReturn(Optional.of(testUser));
         when(jwtGenerateService.generateToken(eq(testUser), eq(1L))).thenReturn("newAccessToken");
 
         String newToken = refreshTokenService.refreshToken(refreshToken);
 
         assertEquals("newAccessToken", newToken);
+
+        verify(jwtGenerateService).getAlgorithmForIssuer("sch-auth");
+        verify(jwtGenerateService).verifyToken(eq(refreshToken.getRefreshToken()), eq(algorithm));
+        verify(decodedJWT).getSubject();
+        verify(userRepository).findByUsernameIgnoreCase("testUser");
+        verify(jwtGenerateService).generateToken(eq(testUser), eq(1L));
     }
 
     @Test
     void testRefreshToken_TokenExpired() {
         Algorithm algorithm = Algorithm.HMAC256("test-secret");
-        when(jwtGenerateService.getAlgorithmForIssuer("sch-auth")).thenReturn(algorithm);
+        when(jwtGenerateService.getAlgorithmForIssuer(anyString())).thenReturn(algorithm);
 
         RefreshToken refreshToken = new RefreshToken("expiredRefreshToken", Instant.now().minusSeconds(3600));
         DecodedJWT decodedJWT = mock(DecodedJWT.class);
 
         when(jwtGenerateService.verifyToken(eq(refreshToken.getRefreshToken()), eq(algorithm)))
                 .thenReturn(decodedJWT);
-        when(decodedJWT.getExpiresAt()).thenReturn(Date.from(Instant.now().minusSeconds(3600)));
 
         assertThrows(InvalidJwtTokenException.class, () -> refreshTokenService.refreshToken(refreshToken));
     }
@@ -83,7 +87,6 @@ public class RefreshTokenServiceImplTest {
         when(jwtGenerateService.verifyToken(eq(refreshToken.getRefreshToken()), eq(algorithm)))
                 .thenReturn(decodedJWT);
         when(decodedJWT.getSubject()).thenReturn("unknownUser");
-        when(decodedJWT.getExpiresAt()).thenReturn(Date.from(Instant.now().plusSeconds(3600)));
         when(userRepository.findByUsernameIgnoreCase("unknownUser")).thenReturn(Optional.empty());
 
         assertThrows(InvalidJwtTokenException.class, () -> refreshTokenService.refreshToken(refreshToken));
@@ -91,7 +94,9 @@ public class RefreshTokenServiceImplTest {
 
     @Test
     void testRefreshToken_InvalidTokenFormat() {
-        RefreshToken refreshToken = new RefreshToken(null, Instant.now().plusSeconds(3600));
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setRefreshToken(null);
+        refreshToken.setExpiryDate(Instant.now().plusSeconds(3600));
 
         assertThrows(InvalidJwtTokenException.class, () -> refreshTokenService.refreshToken(refreshToken));
     }

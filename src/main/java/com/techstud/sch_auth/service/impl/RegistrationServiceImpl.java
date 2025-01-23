@@ -11,6 +11,7 @@ import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.RegistrationService;
 import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.service.UserFactory;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -20,20 +21,13 @@ import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RegistrationServiceImpl implements RegistrationService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final UserFactory userFactory;
     private final TokenService tokenService;
-
-    public RegistrationServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
-                                   UserFactory userFactory, TokenService tokenService) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.userFactory = userFactory;
-        this.tokenService = tokenService;
-    }
 
     @Override
     public SuccessAuthenticationDto processRegister(RegisterDto registerDto) {

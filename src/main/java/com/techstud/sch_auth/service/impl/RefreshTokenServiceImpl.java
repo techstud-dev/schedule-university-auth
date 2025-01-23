@@ -8,25 +8,26 @@ import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.RefreshTokenService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final TokenService tokenService;
     private final UserRepository userRepository;
 
-    public RefreshTokenServiceImpl(TokenService tokenService, UserRepository userRepository) {
-        this.tokenService = tokenService;
-        this.userRepository = userRepository;
-    }
-
     @Override
     public String refreshToken(RefreshToken refreshToken) {
         Algorithm algorithm = tokenService.getAlgorithmForIssuer("sch-auth");
         DecodedJWT decodedJWT = tokenService.verifyToken(refreshToken.getRefreshToken(), algorithm);
+
+        if (decodedJWT == null) {
+            throw new InvalidJwtTokenException();
+        }
 
         String username = decodedJWT.getSubject();
         User user = userRepository.findByUsernameIgnoreCase(username)

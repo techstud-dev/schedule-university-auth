@@ -9,6 +9,7 @@ import com.techstud.sch_auth.exception.UserNotFoundException;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.LoginService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,18 +19,12 @@ import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class LoginServiceImpl implements LoginService {
 
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    public LoginServiceImpl(UserRepository userRepository, TokenService tokenService,
-                            BCryptPasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.tokenService = tokenService;
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Override
     public SuccessAuthenticationDto processLogin(LoginDto loginDto) {

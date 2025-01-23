@@ -21,7 +21,7 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-public class ValidatorServiceImplTest {
+public class ValidationServiceImplTest {
 
     @Mock
     private TokenService tokenService;
