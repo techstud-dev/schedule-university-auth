@@ -55,7 +55,7 @@ public class TokenServiceTest {
         assertEquals("testUser", decodedJWT.getSubject());
         assertEquals("access", decodedJWT.getClaim("type").asString());
         assertArrayEquals(
-                new String[]{"USER", "ADMIN"},
+                new String[]{"ADMIN", "USER"},
                 decodedJWT.getClaim("roles").asArray(String.class)
         );
     }
