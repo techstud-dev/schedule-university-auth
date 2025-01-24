@@ -14,8 +14,8 @@ public class RegisterDto {
     private final String email;
     private final String phoneNumber;
 
-    public RegisterDto(@NonNull String username, @NonNull String password,
-                       @NonNull String email, @NonNull String phoneNumber) {
+    public RegisterDto(String username, String password,
+                       String email, String phoneNumber) {
         this.requestId = UUID.randomUUID().toString();
         this.username = username;
         this.password = password;

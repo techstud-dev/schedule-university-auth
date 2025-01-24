@@ -12,7 +12,7 @@ public class LoginDto {
     private final String identificationField;
     private final String password;
 
-    public LoginDto(@NotNull String identificationField, @NotNull String password) {
+    public LoginDto(String identificationField, String password) {
         this.requestId = UUID.randomUUID().toString();
         this.identificationField = identificationField;
         this.password = password;

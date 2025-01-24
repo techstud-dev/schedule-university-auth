@@ -12,7 +12,7 @@ public class SuccessAuthenticationDto {
     private final String token;
     private final String refreshToken;
 
-    public SuccessAuthenticationDto(@NonNull String token, @NonNull String refreshToken) {
+    public SuccessAuthenticationDto(String token, String refreshToken) {
         this.requestId = UUID.randomUUID().toString();
         this.token = token;
         this.refreshToken = refreshToken;

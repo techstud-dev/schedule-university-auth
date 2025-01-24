@@ -11,7 +11,7 @@ public class ServiceDto {
     private final String requestId;
     private final String name;
 
-    public ServiceDto(@NonNull String name) {
+    public ServiceDto(String name) {
         this.requestId = UUID.randomUUID().toString();
         this.name = name;
     }
