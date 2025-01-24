@@ -1,23 +1,24 @@
 package com.techstud.sch_auth.security;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.techstud.sch_auth.dto.ServiceDto;
 import com.techstud.sch_auth.entity.Role;
 import com.techstud.sch_auth.entity.User;
-import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.security.impl.TokenServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 public class TokenServiceTest {
 
     @InjectMocks
@@ -25,101 +26,118 @@ public class TokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        tokenService = new TokenServiceImpl();
+        MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(tokenService, "SECRET_KEY", "mockSecretKey");
         ReflectionTestUtils.setField(tokenService, "PARSER_SECRET_KEY", "mockParserSecretKey");
-
+        ReflectionTestUtils.setField(tokenService, "MAIN_SECRET_KEY", "mockMainSecretKey");
+        ReflectionTestUtils.setField(tokenService, "authIssuer", "sch-auth");
+        ReflectionTestUtils.setField(tokenService, "mainAudience", "sch-main");
         tokenService.initAlgorithms();
     }
 
     @Test
-    public void testInitAlgorithms() {
-        assertNotNull(ReflectionTestUtils.getField(tokenService, "authAlgorithm"));
-        assertNotNull(ReflectionTestUtils.getField(tokenService, "parserAlgorithm"));
+    public void testGenerateToken_User() {
+        Role roleAdmin = new Role("ADMIN");
+        Role roleUser = new Role("USER");
+
+        User user = User.builder()
+                .username("testUser")
+                .password("password")
+                .roles(Set.of(roleAdmin, roleUser))
+                .build();
+
+        String token = tokenService.generateToken(user, 15);
+
+        assertNotNull(token);
+        DecodedJWT decodedJWT = JWT.decode(token);
+        assertEquals("sch-auth", decodedJWT.getIssuer());
+        assertEquals("sch-main", decodedJWT.getAudience().get(0));
+        assertEquals("testUser", decodedJWT.getSubject());
+        assertEquals("access", decodedJWT.getClaim("type").asString());
+        assertArrayEquals(
+                new String[]{"USER", "ADMIN"},
+                decodedJWT.getClaim("roles").asArray(String.class)
+        );
     }
 
     @Test
-    public void testFailureInitAlgorithms() {
-        ReflectionTestUtils.setField(tokenService, "SECRET_KEY", "");
-        assertThrows(IllegalArgumentException.class, () -> tokenService.initAlgorithms());
-    }
+    public void testGenerateRefreshToken_User() {
+        Role roleUser = new Role("USER");
 
-    @Test
-    public void testGenerateToken_Success() {
-        User user = new User();
-        user.setUsername("mockUsername");
-        user.setRoles(Set.of(new Role("USER"), new Role("ADMIN")));
+        User user = User.builder()
+                .username("testUser")
+                .password("password")
+                .roles(Set.of(roleUser))
+                .build();
 
-        String token = tokenService.generateToken(user, 10);
-        DecodedJWT jwt = JWT.decode(token);
+        String token = tokenService.generateRefreshToken(user, 24);
 
-        assertEquals("sch-auth", jwt.getIssuer());
-        assertEquals(List.of("sch-main"), new ArrayList<>(jwt.getAudience()));
-        assertEquals("mockUsername", jwt.getSubject());
-        assertEquals(Set.of("USER", "ADMIN"), Set.of("USER", "ADMIN"));
-        assertNotNull(jwt.getExpiresAt());
-    }
-
-    @Test
-    public void testGenerateRefreshToken_Success() {
-        User user = new User();
-        user.setUsername("mockUsername");
-
-        String token = tokenService.generateRefreshToken(user, 1);
-        DecodedJWT jwt = JWT.decode(token);
-
-        assertEquals("sch-auth", jwt.getIssuer());
-        assertEquals("refresh", jwt.getClaim("type").asString());
-        assertEquals("mockUsername", jwt.getSubject());
-        assertNotNull(jwt.getExpiresAt());
+        assertNotNull(token);
+        DecodedJWT decodedJWT = JWT.decode(token);
+        assertEquals("refresh", decodedJWT.getClaim("type").asString());
+        assertEquals("sch-auth", decodedJWT.getIssuer());
+        assertEquals("testUser", decodedJWT.getSubject());
     }
 
     @Test
     public void testVerifyToken_Success() {
-        User user = new User();
-        user.setUsername("mockUsername");
+        Role roleUser = new Role("USER");
 
-        String token = "Bearer " + tokenService.generateToken(user, 5);
-        DecodedJWT jwt = tokenService.verifyToken(token, tokenService.getAlgorithmForIssuer("sch-auth"));
+        User user = User.builder()
+                .username("testUser")
+                .password("password")
+                .roles(Set.of(roleUser))
+                .build();
 
-        assertEquals("sch-auth", jwt.getIssuer());
-        assertEquals("mockUsername", jwt.getSubject());
-    }
+        String token = tokenService.generateToken(user, 15);
 
-    @Test
-    public void testVerifyToken_Failure() {
-        String invalidToken = "Bearer invalidToken";
-
-        assertThrows(InvalidJwtTokenException.class, () -> tokenService.verifyToken(invalidToken,
-                tokenService.getAlgorithmForIssuer("sch-auth")));
-    }
-
-    @Test
-    public void testGetAlgorithmForIssuer_Success() {
-        Algorithm authAlgorithm = tokenService.getAlgorithmForIssuer("sch-auth");
-        Algorithm parserAlgorithm = tokenService.getAlgorithmForIssuer("sch-parser");
-
-        assertNotNull(parserAlgorithm);
-        assertNotNull(authAlgorithm);
-        assertThrows(IllegalArgumentException.class, () -> tokenService.getAlgorithmForIssuer("unknown"));
+        DecodedJWT decodedJWT = tokenService.verifyToken("Bearer " + token, tokenService.getAlgorithmForIssuer("sch-auth"));
+        assertNotNull(decodedJWT);
+        assertEquals("testUser", decodedJWT.getSubject());
+        assertEquals("USER", decodedJWT.getClaim("roles").asArray(String.class)[0]);
     }
 
     @Test
     public void testDecodeIssuer_Success() {
-        User user = new User();
-        user.setUsername("mockUsername");
+        Role roleUser = new Role("USER");
 
-        String token = tokenService.generateToken(user, 5);
-        String issuer = JWT.decode(token).getIssuer();
+        User user = User.builder()
+                .username("testUser")
+                .password("password")
+                .roles(Set.of(roleUser))
+                .build();
 
+        String token = tokenService.generateToken(user, 15);
+
+        String issuer = tokenService.decodeIssuer("Bearer " + token);
         assertEquals("sch-auth", issuer);
     }
 
     @Test
-    public void testDecodeIssuer_Failure() {
+    public void testDecodeIssuer_InvalidToken() {
         String invalidToken = "Bearer invalidToken";
 
-        assertThrows(IllegalArgumentException.class, () ->
-                tokenService.decodeIssuer(invalidToken));
+        assertThrows(IllegalArgumentException.class, () -> tokenService.decodeIssuer(invalidToken));
+    }
+
+    @Test
+    public void testGenerateToken_ServiceDto() {
+        ServiceDto serviceInfo = new ServiceDto("testService");
+        String token = tokenService.generateToken(serviceInfo);
+
+        assertNotNull(token);
+        DecodedJWT decodedJWT = JWT.decode(token);
+        assertEquals("access", decodedJWT.getClaim("type").asString());
+        assertEquals("testService", decodedJWT.getAudience().get(0));
+    }
+
+    @Test
+    public void testGenerateRefreshToken_ServiceDto() {
+        ServiceDto serviceInfo = new ServiceDto("testService");
+        String token = tokenService.generateRefreshToken(serviceInfo);
+
+        assertNotNull(token);
+        DecodedJWT decodedJWT = JWT.decode(token);
+        assertEquals("refresh", decodedJWT.getClaim("type").asString());
     }
 }

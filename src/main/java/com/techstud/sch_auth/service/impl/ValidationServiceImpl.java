@@ -32,8 +32,8 @@ public class ValidationServiceImpl implements ValidationService {
             log.error("Email is blank, request: {}", registerDto.getRequestId());
             throw new ValidationException("Email cannot be blank.");
         }
-        if (!registerDto.getEmail().matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")
-                || StringUtils.isBlank(registerDto.getEmail())) {
+        if (StringUtils.isBlank(registerDto.getEmail())
+                || !registerDto.getEmail().matches("^[\\w._%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
             log.error("Email format is invalid, request: {}", registerDto.getRequestId());
             throw new ValidationException("Email format is invalid.");
         }
@@ -54,15 +54,15 @@ public class ValidationServiceImpl implements ValidationService {
     @Override
     public void validateLogin(LoginDto loginDto) {
         if (loginDto == null) {
-            log.error("Login form is null");
+            log.error("Login form is null.");
             throw new ValidationException("Login form cannot be null.");
         }
         if (StringUtils.isBlank(loginDto.getIdentificationField())) {
-            log.error("Identification field is blank");
+            log.error("Identification field is blank. request: {}", loginDto.getRequestId());
             throw new ValidationException("Identification field cannot be blank.");
         }
         if (StringUtils.isBlank(loginDto.getPassword())) {
-            log.error("Password is blank");
+            log.error("Password is blank. request: {}", loginDto.getRequestId());
             throw new ValidationException("Password cannot be blank.");
         }
     }

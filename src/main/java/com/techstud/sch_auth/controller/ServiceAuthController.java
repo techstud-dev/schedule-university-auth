@@ -30,6 +30,7 @@ public class ServiceAuthController {
                 "Access-Token", tokens.getToken(),
                 "Refresh-Token", tokens.getRefreshToken()
         );
+
         return responseUtil.okWithHeadersOnly(headers);
     }
 
@@ -37,9 +38,7 @@ public class ServiceAuthController {
     public ResponseEntity<Void> refreshAccessServiceToken(@RequestHeader("Authorization") String token) {
         String accessToken = securityFacade.processRefreshToken(token);
 
-        Map<String, String> headers = Map.of(
-                "Access-Token", accessToken
-        );
+        Map<String, String> headers = Map.of("Access-Token", accessToken);
         return responseUtil.okWithHeadersOnly(headers);
     }
 }
