@@ -44,10 +44,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         );
         newUser.setRoles(Set.of(userRole));
 
-        String accessToken = tokenService.generateToken(newUser, 1);
-        String refreshToken = tokenService.generateRefreshToken(newUser, 2);
+        String accessToken = tokenService.generateToken(newUser, 15);
+        String refreshToken = tokenService.generateRefreshToken(newUser, 1);
 
-        newUser.setRefreshToken(new RefreshToken(refreshToken, Instant.now().plus(2, ChronoUnit.HOURS)));
+        newUser.setRefreshToken(new RefreshToken(refreshToken, Instant.now().plus(1, ChronoUnit.HOURS)));
         userRepository.save(newUser);
 
         log.info("User {} registered successfully", newUser.getUsername());
