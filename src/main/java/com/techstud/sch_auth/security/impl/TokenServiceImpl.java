@@ -118,9 +118,11 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public DecodedJWT verifyToken(String token, Algorithm algorithm) {
-        token = token.substring("Bearer ".length()).trim();
-
         try {
+            if (token.startsWith("Bearer ")) {
+                token = token.substring("Bearer ".length()).trim();
+            }
+
             JWTVerifier verifier = JWT.require(algorithm).build();
             return verifier.verify(token);
         } catch (JWTVerificationException e) {
@@ -132,8 +134,11 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public String decodeIssuer(String token) {
         try {
-            String jwt = token.substring("Bearer ".length()).trim();
-            DecodedJWT decodedJWT = JWT.decode(jwt);
+            if (token.startsWith("Bearer ")) {
+                token = token.substring("Bearer ".length()).trim();
+            }
+
+            DecodedJWT decodedJWT = JWT.decode(token);
             return decodedJWT.getIssuer();
         } catch (JWTDecodeException e) {
             log.error("Failed to decode token issuer: {}", e.getMessage());
