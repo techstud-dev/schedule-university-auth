@@ -133,10 +133,12 @@ public class ValidationServiceImplTest {
         when(decodedJWT.getClaim("type")).thenReturn(typeClaim);
         when(typeClaim.asString()).thenReturn("refresh");
 
-        when(decodedJWT.getExpiresAt()).thenReturn(Date.from(Instant.now().plusSeconds(3600)));
+        InvalidJwtTokenException exception = assertThrows(
+                InvalidJwtTokenException.class,
+                () -> validationService.validateAndDecodeToken(token, expectedType)
+        );
 
-        assertThrows(InvalidJwtTokenException.class,
-                () -> validationService.validateAndDecodeToken(token, expectedType));
+        assertEquals("Invalid token type. Expected: access, but found: refresh", exception.getMessage());
     }
 
     @Test

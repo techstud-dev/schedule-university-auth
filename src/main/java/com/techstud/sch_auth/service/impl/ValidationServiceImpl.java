@@ -81,8 +81,9 @@ public class ValidationServiceImpl implements ValidationService {
             throw new InvalidJwtTokenException();
         }
 
-        validateToken(decodedJWT);
         validateTokenType(decodedJWT, expectedType);
+
+        validateToken(decodedJWT);
     }
 
     @Override
