@@ -1,7 +1,6 @@
 package com.techstud.sch_auth.dto;
 
 import lombok.Data;
-import lombok.NonNull;
 
 import java.util.UUID;
 
