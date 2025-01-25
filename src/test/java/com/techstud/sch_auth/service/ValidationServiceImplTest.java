@@ -11,9 +11,11 @@ import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.impl.ValidationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.Date;
@@ -21,6 +23,7 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class ValidationServiceImplTest {
 
     @Mock
@@ -28,11 +31,6 @@ public class ValidationServiceImplTest {
 
     @InjectMocks
     private ValidationServiceImpl validationService;
-
-    @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void validateRegister_Success() {

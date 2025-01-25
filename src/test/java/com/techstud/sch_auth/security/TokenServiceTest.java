@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -26,7 +25,6 @@ public class TokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(tokenService, "SECRET_KEY", "mockSecretKey");
         ReflectionTestUtils.setField(tokenService, "PARSER_SECRET_KEY", "mockParserSecretKey");
         ReflectionTestUtils.setField(tokenService, "MAIN_SECRET_KEY", "mockMainSecretKey");
