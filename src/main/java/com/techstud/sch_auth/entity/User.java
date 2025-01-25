@@ -13,9 +13,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
-@NoArgsConstructor
 @Entity
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "users")
 public class User implements UserDetails {
@@ -28,6 +28,8 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String username;
 
+    private String fullName;
+
     private String password;
 
     @Column(unique = true)
@@ -36,6 +38,8 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String phoneNumber;
 
+    private String groupNumber;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
@@ -43,6 +47,10 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "university_id", nullable = false)
+    private University universityId;
 
     @Embedded
     private RefreshToken refreshToken;

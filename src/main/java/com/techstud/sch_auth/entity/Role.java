@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 
-@Entity
-@Table(name = "roles")
-@NoArgsConstructor
 @Getter
+@Entity
+@NoArgsConstructor
+@Table(name = "roles")
 public class Role implements GrantedAuthority {
 
     @Id
