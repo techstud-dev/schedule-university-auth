@@ -35,13 +35,13 @@ public class TokenServiceTest {
 
     @Test
     public void testGenerateToken_User() {
-        Role roleAdmin = new Role("ADMIN");
         Role roleUser = new Role("USER");
+        Role roleAdmin = new Role("ADMIN");
 
         User user = User.builder()
                 .username("testUser")
                 .password("password")
-                .roles(Set.of(roleAdmin, roleUser))
+                .roles(Set.of(roleUser, roleAdmin))
                 .build();
 
         String token = tokenService.generateToken(user, 15);
@@ -53,7 +53,7 @@ public class TokenServiceTest {
         assertEquals("testUser", decodedJWT.getSubject());
         assertEquals("access", decodedJWT.getClaim("type").asString());
         assertArrayEquals(
-                new String[]{"ADMIN", "USER"},
+                new String[]{"USER", "ADMIN"},
                 decodedJWT.getClaim("roles").asArray(String.class)
         );
     }
