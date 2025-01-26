@@ -1,46 +1,38 @@
 package com.techstud.sch_auth.controller;
 
-import com.techstud.sch_auth.config.JwtProperties;
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
-import com.techstud.sch_auth.service.AuthFacade;
+import com.techstud.sch_auth.service.UserAuthFacade;
 import com.techstud.sch_auth.swagger.BadCredentialsResponse;
 import com.techstud.sch_auth.swagger.InvalidJwtTokenResponse;
 import com.techstud.sch_auth.swagger.UserAlreadyExistResponse;
 import com.techstud.sch_auth.swagger.UserNotFoundResponse;
 import com.techstud.sch_auth.util.CookieUtil;
+import com.techstud.sch_auth.util.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final JwtProperties jwtProperties;
-    private final AuthFacade authFacade;
+    private final UserAuthFacade authFacade;
     private final CookieUtil cookieUtil;
-
-    public AuthController(JwtProperties jwtProperties,
-                          AuthFacade authFacade,
-                          CookieUtil cookieUtil) {
-        this.jwtProperties = jwtProperties;
-        this.authFacade = authFacade;
-        this.cookieUtil = cookieUtil;
-    }
+    private final ResponseUtil responseUtil;
 
     @Operation(
             summary = "Логин существующего пользователя",
@@ -106,19 +98,15 @@ public class AuthController {
             }
     )
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<SuccessAuthenticationDto> login(@RequestBody LoginDto loginDto) {
         SuccessAuthenticationDto response = authFacade.login(loginDto);
 
-        ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie("accessToken",
-                response.getToken(), jwtProperties.getAccessTokenExpiration(), true);
+        List<ResponseCookie> cookies = cookieUtil.createAuthCookies(
+                response.getToken(),
+                response.getRefreshToken()
+        );
 
-        ResponseCookie refreshTokenCookie = cookieUtil.createHttpOnlyCookie("refreshToken",
-                response.getRefreshToken(), jwtProperties.getRefreshTokenExpiration(), true);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .body(response);
+        return responseUtil.okWithCookies(response, cookies.toArray(ResponseCookie[]::new));
     }
 
     @Operation(
@@ -198,45 +186,42 @@ public class AuthController {
             }
     )
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterDto registerDto) {
+    public ResponseEntity<SuccessAuthenticationDto> register(@RequestBody RegisterDto registerDto) {
         SuccessAuthenticationDto response = authFacade.register(registerDto);
 
-        ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie("accessToken",
-                response.getToken(), jwtProperties.getAccessTokenExpiration(), true);
+        List<ResponseCookie> cookies = cookieUtil.createAuthCookies(
+                response.getToken(),
+                response.getRefreshToken()
+        );
 
-        ResponseCookie refreshTokenCookie = cookieUtil.createHttpOnlyCookie("refreshToken",
-                response.getRefreshToken(), jwtProperties.getRefreshTokenExpiration(), true);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .body(response);
+        return responseUtil.okWithCookies(response, cookies.toArray(ResponseCookie[]::new));
     }
 
     @Operation(
             summary = "Обновление access токена",
             description = """
-            Использует переданный refresh токен для обновления access токена.
-            Новый access токен возвращается в виде HttpOnly cookie в заголовке ответа.
-            """,
+        Использует переданный refresh токен для обновления access токена.
+        Новый access токен генерируется на основе refresh токена.
+        Новый access токен возвращается в виде HttpOnly cookie в заголовке ответа.
+        """,
             tags = {"Authentication"},
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = """
-                Объект с refresh токеном, который используется для обновления access токена.
-                Пример запроса:
-                {
-                    "refreshToken": "your_refresh_token"
-                }
-                """,
+            Объект с refresh токеном, который используется для обновления access токена.
+            Пример запроса:
+            {
+                "refreshToken": "your_refresh_token"
+            }
+            """,
                     required = true,
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(
                                     example = """
-                        {
-                            "refreshToken": "your_refresh_token"
-                        }
-                        """
+                    {
+                        "refreshToken": "your_refresh_token"
+                    }
+                    """
                             )
                     )
             ),
@@ -259,11 +244,11 @@ public class AuthController {
                     @ApiResponse(
                             responseCode = "401",
                             description = """
-                    Обновление токена не удалось. Возможные причины:
-                    - Refresh токен недействителен
-                    - Refresh токен истёк
-                    - Пользователь не найден
-                    """,
+                Обновление токена не удалось. Возможные причины:
+                - Refresh токен недействителен
+                - Refresh токен истёк
+                - Пользователь не найден
+                """,
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = InvalidJwtTokenResponse.class)
@@ -280,14 +265,12 @@ public class AuthController {
             }
     )
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshToken refreshTokenRequest) {
+    public ResponseEntity<String> refreshToken(@RequestBody RefreshToken refreshTokenRequest) {
         String accessToken = authFacade.refreshToken(refreshTokenRequest);
 
-        ResponseCookie accessTokenCookie = cookieUtil.createHttpOnlyCookie(
-                "accessToken", accessToken, jwtProperties.getAccessTokenExpiration(), true);
+        ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(accessToken);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
-                .body("Successfully refreshed token");
+        return responseUtil.okWithCookies(accessToken, accessTokenCookie);
     }
+
 }

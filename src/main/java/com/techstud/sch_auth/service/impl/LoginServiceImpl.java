@@ -6,81 +6,51 @@ import com.techstud.sch_auth.entity.RefreshToken;
 import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.exception.BadCredentialsException;
 import com.techstud.sch_auth.exception.UserNotFoundException;
-import com.techstud.sch_auth.repository.RoleRepository;
 import com.techstud.sch_auth.repository.UserRepository;
-import com.techstud.sch_auth.security.JwtGenerateService;
-import com.techstud.sch_auth.service.AbstractAuthService;
+import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.LoginService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 @Slf4j
 @Service
-public class LoginServiceImpl extends AbstractAuthService implements LoginService {
+@RequiredArgsConstructor
+public class LoginServiceImpl implements LoginService {
 
+    private final UserRepository userRepository;
+    private final TokenService tokenService;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    public LoginServiceImpl(UserRepository userRepository,
-                            RoleRepository roleRepository,
-                            JwtGenerateService jwtGenerateService,
-                            BCryptPasswordEncoder passwordEncoder) {
-        super(userRepository, roleRepository, jwtGenerateService);
-        this.passwordEncoder = passwordEncoder;
-    }
 
     @Override
     public SuccessAuthenticationDto processLogin(LoginDto loginDto) {
-        if (loginDto.getIdentificationField() == null || loginDto.getIdentificationField().trim().isEmpty()) {
-            throw new BadCredentialsException();
-        }
+        User user = findUserByIdentificationField(loginDto.getIdentificationField());
+        validatePassword(loginDto.getPassword(), user.getPassword());
 
-        User user = findUserByIdentificationFields(loginDto);
+        String accessToken = tokenService.generateToken(user, 15); // 15 минут, см. TokenService
+        String refreshToken = tokenService.generateRefreshToken(user, 1); // 1 час
 
-        if (!passwordValidation(loginDto.getPassword(), user.getPassword())) {
-            throw new BadCredentialsException();
-        }
-        String accessToken = jwtGenerateService.generateToken(user, 1);
-        String refreshTokenString = jwtGenerateService.generateRefreshToken(user, 2);
-
-        embedRefreshToken(user, refreshTokenString);
+        user.setRefreshToken(new RefreshToken(refreshToken, Instant.now().plus(1, ChronoUnit.HOURS)));
         userRepository.save(user);
 
-        log.info("Request id: {} already logged in", loginDto.getRequestId());
-        return buildSuccessResponse(accessToken, user.getRefreshToken());
+        log.info("User {} logged in successfully", user.getUsername());
+        return new SuccessAuthenticationDto(accessToken, refreshToken);
     }
 
-    private User findUserByIdentificationFields(LoginDto loginDto) {
-        String identificationField = loginDto.getIdentificationField().trim();
-
-        return userRepository.findByUsernameIgnoreCase(identificationField)
-                .or(() -> userRepository.findByEmailIgnoreCase(identificationField))
-                .or(() -> userRepository.findByPhoneNumber(identificationField))
+    private User findUserByIdentificationField(String field) {
+        return userRepository.findByUsernameIgnoreCase(field)
+                .or(() -> userRepository.findByEmailIgnoreCase(field))
+                .or(() -> userRepository.findByPhoneNumber(field))
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    private boolean passwordValidation(String password, String hashedPassword) {
-        if (password == null) {
-            throw new BadCredentialsException();
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
+            throw new BadCredentialsException("Invalid password.");
         }
-        return passwordEncoder.matches(password, hashedPassword);
-    }
-
-    private void embedRefreshToken(User user, String refreshTokenString) {
-        LocalDateTime expiryDate = LocalDateTime.now().plusDays(30).truncatedTo(ChronoUnit.SECONDS);
-        RefreshToken refreshToken = new RefreshToken(refreshTokenString, expiryDate);
-        user.setRefreshToken(refreshToken);
-    }
-
-    private SuccessAuthenticationDto buildSuccessResponse(String accessToken, RefreshToken refreshToken) {
-        SuccessAuthenticationDto response = new SuccessAuthenticationDto();
-        response.setRequestId(UUID.randomUUID().toString());
-        response.setToken(accessToken);
-        response.setRefreshToken(refreshToken.getRefreshToken());
-        return response;
     }
 }

@@ -7,7 +7,7 @@ import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.exception.BadCredentialsException;
 import com.techstud.sch_auth.exception.UserNotFoundException;
 import com.techstud.sch_auth.repository.UserRepository;
-import com.techstud.sch_auth.security.JwtGenerateService;
+import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.impl.LoginServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,7 +30,7 @@ class LoginServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
-    private JwtGenerateService jwtGenerateService;
+    private TokenService jwtGenerateService;
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
@@ -42,16 +43,16 @@ class LoginServiceImplTest {
         LoginDto loginDto = new LoginDto("username", "password");
         User user = new User();
         user.setPassword("hashedPassword");
-        RefreshToken refreshToken = new RefreshToken("refresh-token", LocalDateTime.now().plusDays(30));
+        RefreshToken refreshToken = new RefreshToken("refresh-token", Instant.now().plus(30, ChronoUnit.DAYS));
         user.setRefreshToken(refreshToken);
 
         when(userRepository.findByUsernameIgnoreCase("username"))
                 .thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password", "hashedPassword"))
                 .thenReturn(true);
-        when(jwtGenerateService.generateToken(user, 1))
+        when(jwtGenerateService.generateToken(eq(user), anyLong()))
                 .thenReturn("access-token");
-        when(jwtGenerateService.generateRefreshToken(user, 2))
+        when(jwtGenerateService.generateRefreshToken(eq(user), anyLong()))
                 .thenReturn("new-refresh-token");
 
         SuccessAuthenticationDto response = loginService.processLogin(loginDto);
@@ -77,7 +78,6 @@ class LoginServiceImplTest {
 
     @Test
     void processLogin_ShouldThrowException_WhenPasswordIsInvalid() {
-        // Arrange
         LoginDto loginDto = new LoginDto("username", "wrongPassword");
         User user = new User();
         user.setPassword("hashedPassword");
@@ -95,7 +95,7 @@ class LoginServiceImplTest {
 
     @Test
     void processLogin_ShouldThrowException_WhenIdentificationFieldIsNullOrEmpty() {
-        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(new LoginDto(null, "password")));
-        assertThrows(BadCredentialsException.class, () -> loginService.processLogin(new LoginDto(" ", "password")));
+        assertThrows(UserNotFoundException.class, () -> loginService.processLogin(new LoginDto(null, "password")));
+        assertThrows(UserNotFoundException.class, () -> loginService.processLogin(new LoginDto(" ", "password")));
     }
 }

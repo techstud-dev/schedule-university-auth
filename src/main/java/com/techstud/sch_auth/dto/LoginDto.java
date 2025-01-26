@@ -1,22 +1,20 @@
 package com.techstud.sch_auth.dto;
 
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class LoginDto {
 
-    private String requestId = UUID.randomUUID().toString();
-    private String identificationField;
-    private String password;
+    private final String requestId;
+    private final String identificationField;
+    private final String password;
 
-    public LoginDto(String testUser, String password) {
-        this.identificationField = testUser;
+    public LoginDto(String identificationField, String password) {
+        this.requestId = UUID.randomUUID().toString();
+        this.identificationField = identificationField;
         this.password = password;
     }
 }
