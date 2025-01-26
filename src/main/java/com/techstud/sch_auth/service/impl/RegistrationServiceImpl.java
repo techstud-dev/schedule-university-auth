@@ -39,7 +39,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         validateUserUniqueness(registerDto);
 
         University university = resolveUniversity(registerDto.getUniversity());
-        Role userRole = resolveRole("USER");
+        Role userRole = resolveRole();
 
         User newUser = createAndSaveUser(registerDto, university, userRole);
 
@@ -58,9 +58,9 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .orElseGet(() -> universityRepository.save(new University(universityName)));
     }
 
-    private Role resolveRole(String roleName) {
-        return roleRepository.findByName(roleName)
-                .orElseGet(() -> roleRepository.save(new Role(roleName)));
+    private Role resolveRole() {
+        return roleRepository.findByName("USER")
+                .orElseGet(() -> roleRepository.save(new Role("USER")));
     }
 
     private User createAndSaveUser(RegisterDto registerDto, University university, Role role) {
