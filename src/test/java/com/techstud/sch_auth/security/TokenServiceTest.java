@@ -15,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,10 +53,8 @@ public class TokenServiceTest {
         assertEquals("sch-main", decodedJWT.getAudience().get(0));
         assertEquals("testUser", decodedJWT.getSubject());
         assertEquals("access", decodedJWT.getClaim("type").asString());
-        assertArrayEquals(
-                new String[]{"ADMIN", "USER"},
-                decodedJWT.getClaim("roles").asArray(String.class)
-        );
+        String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
+        assertThat(roles).containsExactlyInAnyOrder("USER", "ADMIN");
     }
 
     @Test
