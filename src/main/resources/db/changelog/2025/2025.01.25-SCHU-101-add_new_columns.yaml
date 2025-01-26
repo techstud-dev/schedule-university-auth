@@ -1,0 +1,176 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Eldar Khalilov
+      changes:
+        - createSequence:
+            sequenceName: role_id_seq
+            startValue: 1
+            incrementBy: 1
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+
+  - changeSet:
+      id: 4
+      author: Eldar Khalilov
+      changes: # добавлена таблица для ВУЗов (University entity)
+        - createSequence:
+            sequenceName: university_id_seq
+            startValue: 1
+            incrementBy: 1
+        - createTable:
+            tableName: universities
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+
+  - changeSet:
+      id: 2
+      author: Eldar Khalilov
+      changes: # добавлены колонки: group_number, full_name, university_id
+        - createSequence:
+            sequenceName: user_id_seq
+            startValue: 1
+            incrementBy: 1
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: phone_number
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: group_number
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: university_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_university_id_user
+                    references: universities(id)
+                    nullable: false
+              - column:
+                  name: refresh_token_value
+                  type: VARCHAR(255)
+              - column:
+                  name: refresh_token_expiration_date
+                  type: TIMESTAMP(6)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 3
+      author: Eldar Khalilov
+      changes:
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_roles_user
+                    references: users(id)
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_roles_role
+                    references: roles(id)
+        - addPrimaryKey:
+            tableName: user_roles
+            columnNames: user_id, role_id
+            constraintName: pk_user_roles
+
+  - changeSet:
+      id: 5
+      author: Eldar Khalilov
+      changes: # Добавлены индексы на внешние ключи
+        - createIndex:
+            tableName: users
+            columns:
+              - column:
+                  name: university_id
+            indexName: idx_users_university_id
+
+        - createIndex:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_roles_user_id
+
+        - createIndex:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: role_id
+            indexName: idx_user_roles_role_id

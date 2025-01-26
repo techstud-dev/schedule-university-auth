@@ -79,15 +79,4 @@ public class GlobalExceptionHandler {
         log.error("Jwt token is invalid", e);
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
-
-    @ExceptionHandler(ValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<Map<String, String>> handleValidationException(ValidationException e) {
-        Map<String, String> response = new LinkedHashMap<>();
-        response.put("systemName", systemName);
-        response.put("applicationName", applicationName);
-        response.put("error", e.getMessage());
-        log.error("Validation exception", e);
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
 }

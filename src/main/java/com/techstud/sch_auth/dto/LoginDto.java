@@ -1,6 +1,6 @@
 package com.techstud.sch_auth.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.util.UUID;
@@ -9,7 +9,11 @@ import java.util.UUID;
 public class LoginDto {
 
     private final String requestId;
+
+    @NotBlank(message = "Identification field cannot be blank.")
     private final String identificationField;
+
+    @NotBlank(message = "Password cannot be blank.")
     private final String password;
 
     public LoginDto(String identificationField, String password) {

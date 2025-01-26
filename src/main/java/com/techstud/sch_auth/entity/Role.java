@@ -3,15 +3,17 @@ package com.techstud.sch_auth.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 
-@Entity
-@Table(name = "roles")
-@NoArgsConstructor
 @Getter
+@Entity
+@NoArgsConstructor
+@Table(name = "roles")
 public class Role implements GrantedAuthority {
 
     @Id
+    @Setter
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "role_id_seq")
     @SequenceGenerator(name = "role_id_seq", sequenceName = "role_id_seq", allocationSize = 1)
     private Long id;

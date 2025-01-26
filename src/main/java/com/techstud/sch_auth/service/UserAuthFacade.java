@@ -19,12 +19,10 @@ public class UserAuthFacade {
     private final ValidationService validationService;
 
     public SuccessAuthenticationDto register(RegisterDto request) {
-        validationService.validateRegister(request);
         return registrationService.processRegister(request);
     }
 
     public SuccessAuthenticationDto login(LoginDto request) {
-        validationService.validateLogin(request);
         return loginService.processLogin(request);
     }
 
