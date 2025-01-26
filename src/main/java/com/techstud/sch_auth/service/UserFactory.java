@@ -31,10 +31,6 @@ public class UserFactory {
     }
 
     private String encryptPassword(String password) {
-        String encryptedPassword = passwordEncoder.encode(password);
-        if (encryptedPassword == null) {
-            throw new IllegalStateException("Password encryption failed");
-        }
-        return encryptedPassword;
+        return passwordEncoder.encode(password);
     }
 }

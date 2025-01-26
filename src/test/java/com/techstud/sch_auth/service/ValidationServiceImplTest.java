@@ -3,8 +3,6 @@ package com.techstud.sch_auth.service;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.techstud.sch_auth.dto.LoginDto;
-import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.impl.ValidationServiceImpl;
