@@ -31,8 +31,8 @@ public class LoginServiceImpl implements LoginService {
         User user = findUserByIdentificationField(loginDto.getIdentificationField());
         validatePassword(loginDto.getPassword(), user.getPassword());
 
-        String accessToken = tokenService.generateToken(user, 15); // 15 минут, см. TokenService
-        String refreshToken = tokenService.generateRefreshToken(user, 1); // 1 час
+        String accessToken = tokenService.generateToken(user, 15);
+        String refreshToken = tokenService.generateRefreshToken(user, 1);
 
         user.setRefreshToken(new RefreshToken(refreshToken, Instant.now().plus(1, ChronoUnit.HOURS)));
         userRepository.save(user);

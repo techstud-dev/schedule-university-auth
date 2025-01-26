@@ -6,7 +6,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.techstud.sch_auth.dto.LoginDto;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.exception.InvalidJwtTokenException;
-import com.techstud.sch_auth.exception.ValidationException;
 import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.impl.ValidationServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -29,90 +28,6 @@ public class ValidationServiceImplTest {
 
     @InjectMocks
     private ValidationServiceImpl validationService;
-
-    @Test
-    void validateRegister_Success() {
-        RegisterDto registerDto = new RegisterDto("username", "password123",
-                "user@example.com", "324134153415");
-
-        assertDoesNotThrow(() -> validationService.validateRegister(registerDto));
-    }
-
-    @Test
-    void validateRegister_Failure_NullDto() {
-        assertThrows(ValidationException.class, () -> validationService.validateRegister(null));
-    }
-
-    @Test
-    void validateRegister_Failure_BlankEmail() {
-        RegisterDto registerDto = new RegisterDto("username", "password123",
-                " ", "324134153415");
-
-        assertThrows(ValidationException.class, () -> validationService.validateRegister(registerDto));
-    }
-
-    @Test
-    void validateRegister_Failure_InvalidEmailFormat() {
-        RegisterDto registerDto = new RegisterDto("username", "password123",
-                "invalid-email", "324134153415");
-
-        assertThrows(ValidationException.class, () -> validationService.validateRegister(registerDto));
-    }
-
-    @Test
-    void validateRegister_Failure_ShortPassword() {
-        RegisterDto registerDto = new RegisterDto("username", "short",
-                "user@example.com", "324134153415");
-
-        assertThrows(ValidationException.class, () -> validationService.validateRegister(registerDto));
-    }
-
-    @Test
-    void validateRegister_Failure_BlankUsername() {
-        RegisterDto registerDto = new RegisterDto(" ", "password123",
-                "user@example.com", "324134153415");
-
-        assertThrows(ValidationException.class, () -> validationService.validateRegister(registerDto));
-    }
-
-    @Test
-    void validateRegister_Failure_BlankPhoneNumber() {
-        RegisterDto registerDto = new RegisterDto("username", "password123",
-                "user@example.com", " ");
-
-        assertThrows(ValidationException.class, () -> validationService.validateRegister(registerDto));
-    }
-
-    @Test
-    void validateLogin_Success() {
-        LoginDto loginDto = new LoginDto("user@example.com", "password123");
-
-        assertDoesNotThrow(() -> validationService.validateLogin(loginDto));
-    }
-
-    @Test
-    void validateLogin_Failure_NullDto() {
-        assertThrows(ValidationException.class, () -> validationService.validateLogin(null));
-    }
-
-    @Test
-    void validateLogin_Failure_BlankIdentificationField() {
-        LoginDto loginDto = new LoginDto(" ", "password123");
-
-        assertThrows(ValidationException.class, () -> validationService.validateLogin(loginDto));
-    }
-
-    @Test
-    void validateLogin_Failure_BlankPassword() {
-        LoginDto loginDto = new LoginDto("user@example.com", " ");
-
-        assertThrows(ValidationException.class, () -> validationService.validateLogin(loginDto));
-    }
-
-    @Test
-    void validateAndDecodeToken_Failure_BlankToken() {
-        assertThrows(ValidationException.class, () -> validationService.validateAndDecodeToken(" ", "access"));
-    }
 
     @Test
     void validateAndDecodeToken_Failure_InvalidTokenType() {

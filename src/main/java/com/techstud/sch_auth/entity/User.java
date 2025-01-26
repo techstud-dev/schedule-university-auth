@@ -50,7 +50,7 @@ public class User implements UserDetails {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "university_id", nullable = false)
-    private University universityId;
+    private University university;
 
     @Embedded
     private RefreshToken refreshToken;

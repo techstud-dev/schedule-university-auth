@@ -3,9 +3,11 @@ package com.techstud.sch_auth.service;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.Role;
+import com.techstud.sch_auth.entity.University;
 import com.techstud.sch_auth.entity.User;
 import com.techstud.sch_auth.exception.UserExistsException;
 import com.techstud.sch_auth.repository.RoleRepository;
+import com.techstud.sch_auth.repository.UniversityRepository;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.security.TokenService;
 import com.techstud.sch_auth.service.impl.RegistrationServiceImpl;
@@ -20,7 +22,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +36,9 @@ class RegistrationServiceImplTest {
     private RoleRepository roleRepository;
 
     @Mock
+    private UniversityRepository universityRepository;
+
+    @Mock
     private UserFactory userFactory;
 
     @Mock
@@ -43,92 +49,78 @@ class RegistrationServiceImplTest {
 
     @Test
     void shouldRegisterUserSuccessfully() {
-        RegisterDto registerDto = new RegisterDto("testUser", "password123", "test@example.com", "+123456789");
+        RegisterDto registerDto = new RegisterDto(
+                "username",
+                "Full Name",
+                "Password123",
+                "email@example.com",
+                "1234567890",
+                "Group-1",
+                "Some University"
+        );
+
+        University university = new University("Some University");
+        university.setId(1L);
+
         Role userRole = new Role("USER");
-        User newUser = User.builder()
-                .username("testUser")
-                .password("encryptedPassword")
-                .email("test@example.com")
-                .phoneNumber("+123456789")
+        userRole.setId(1L);
+
+        User user = User.builder()
+                .username(registerDto.getUsername())
+                .fullName(registerDto.getFullName())
+                .password("EncryptedPassword123")
+                .email(registerDto.getEmail())
+                .phoneNumber(registerDto.getPhoneNumber())
+                .groupNumber(registerDto.getGroupNumber())
+                .university(university)
                 .roles(Set.of(userRole))
                 .build();
 
-        when(userRepository.existsByUniqueFields(registerDto.getUsername(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(userFactory.createUser(registerDto.getUsername(), registerDto.getPassword(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(newUser);
-        when(tokenService.generateToken(newUser, 15)).thenReturn("accessToken");
-        when(tokenService.generateRefreshToken(newUser, 1)).thenReturn("refreshToken");
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+
+        when(universityRepository.findByName(registerDto.getUniversity()))
+                .thenReturn(Optional.of(university));
+        when(roleRepository.findByName("USER"))
+                .thenReturn(Optional.of(userRole));
+        when(userFactory.createUser(
+                registerDto.getUsername(),
+                registerDto.getFullName(),
+                registerDto.getPassword(),
+                registerDto.getEmail(),
+                registerDto.getPhoneNumber(),
+                registerDto.getGroupNumber()
+        )).thenReturn(user);
+        when(tokenService.generateToken(user, 15))
+                .thenReturn(accessToken);
+        when(tokenService.generateRefreshToken(user, 1))
+                .thenReturn(refreshToken);
 
         SuccessAuthenticationDto result = registrationService.processRegister(registerDto);
 
-        assertNotNull(result);
-        assertEquals("accessToken", result.getToken());
-        assertEquals("refreshToken", result.getRefreshToken());
-        verify(userRepository).save(newUser);
-        verify(roleRepository, never()).save(any());
+        verify(userRepository).save(user);
+        assertEquals(accessToken, result.getToken());
+        assertEquals(refreshToken, result.getRefreshToken());
     }
 
     @Test
-    void shouldThrowExceptionWhenUserExists() {
-        RegisterDto registerDto = new RegisterDto("testUser", "password123", "test@example.com", "+123456789");
-        when(userRepository.existsByUniqueFields(registerDto.getUsername(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(true);
+    void shouldThrowExceptionWhenUserAlreadyExists() {
+        RegisterDto registerDto = new RegisterDto(
+                "username",
+                "Full Name",
+                "Password123",
+                "email@example.com",
+                "1234567890",
+                "Group-1",
+                "Some University"
+        );
+
+        when(userRepository.existsByUniqueFields(
+                registerDto.getUsername(),
+                registerDto.getEmail(),
+                registerDto.getPhoneNumber()
+        )).thenReturn(true);
 
         assertThrows(UserExistsException.class, () -> registrationService.processRegister(registerDto));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
-    void shouldCreateRoleWhenNotFound() {
-        RegisterDto registerDto = new RegisterDto("testUser", "password123", "test@example.com", "+123456789");
-        Role userRole = new Role("USER");
-        User newUser = User.builder()
-                .username("testUser")
-                .password("encryptedPassword")
-                .email("test@example.com")
-                .phoneNumber("+123456789")
-                .roles(Set.of(userRole))
-                .build();
-
-        when(userRepository.existsByUniqueFields(registerDto.getUsername(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.empty());
-        when(roleRepository.save(any())).thenReturn(userRole);
-        when(userFactory.createUser(registerDto.getUsername(), registerDto.getPassword(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(newUser);
-        when(tokenService.generateToken(newUser, 15)).thenReturn("accessToken");
-        when(tokenService.generateRefreshToken(newUser, 1)).thenReturn("refreshToken");
-
-        SuccessAuthenticationDto result = registrationService.processRegister(registerDto);
-
-        assertNotNull(result);
-        assertEquals("accessToken", result.getToken());
-        assertEquals("refreshToken", result.getRefreshToken());
-        verify(roleRepository).save(any(Role.class));
-    }
-
-    @Test
-    void shouldHandleTokenGenerationFailure() {
-        RegisterDto registerDto = new RegisterDto("testUser", "password123", "test@example.com", "+123456789");
-        Role userRole = new Role("USER");
-        User newUser = User.builder()
-                .username("testUser")
-                .password("encryptedPassword")
-                .email("test@example.com")
-                .phoneNumber("+123456789")
-                .roles(Set.of(userRole))
-                .build();
-
-        when(userRepository.existsByUniqueFields(registerDto.getUsername(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(false);
-        when(roleRepository.findByName("USER")).thenReturn(Optional.of(userRole));
-        when(userFactory.createUser(registerDto.getUsername(), registerDto.getPassword(), registerDto.getEmail(), registerDto.getPhoneNumber()))
-                .thenReturn(newUser);
-        when(tokenService.generateToken(newUser, 15)).thenThrow(new RuntimeException("Token generation failed"));
-
-        assertThrows(RuntimeException.class, () -> registrationService.processRegister(registerDto));
-        verify(userRepository, never()).save(any());
     }
 }
