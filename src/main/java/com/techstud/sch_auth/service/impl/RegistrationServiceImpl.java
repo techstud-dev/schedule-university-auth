@@ -38,22 +38,10 @@ public class RegistrationServiceImpl implements RegistrationService {
     public SuccessAuthenticationDto processRegister(RegisterDto registerDto) {
         validateUserUniqueness(registerDto);
 
-        University university = universityRepository.findByName(registerDto.getUniversity())
-                .orElseGet(() -> universityRepository.save(new University(registerDto.getUniversity())));
+        University university = resolveUniversity(registerDto.getUniversity());
+        Role userRole = resolveRole("USER");
 
-        Role userRole = roleRepository.findByName("USER")
-                .orElseGet(() -> roleRepository.save(new Role("USER")));
-
-        User newUser = userFactory.createUser(
-                registerDto.getUsername(),
-                registerDto.getFullName(),
-                registerDto.getPassword(),
-                registerDto.getEmail(),
-                registerDto.getPhoneNumber(),
-                registerDto.getGroupNumber()
-        );
-        newUser.setUniversity(university);
-        newUser.setRoles(Set.of(userRole));
+        User newUser = createAndSaveUser(registerDto, university, userRole);
 
         String accessToken = tokenService.generateToken(newUser, 15);
         String refreshToken = tokenService.generateRefreshToken(newUser, 1);
@@ -63,6 +51,30 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         log.info("User {} registered successfully", newUser.getUsername());
         return new SuccessAuthenticationDto(accessToken, refreshToken);
+    }
+
+    private University resolveUniversity(String universityName) {
+        return universityRepository.findByName(universityName)
+                .orElseGet(() -> universityRepository.save(new University(universityName)));
+    }
+
+    private Role resolveRole(String roleName) {
+        return roleRepository.findByName(roleName)
+                .orElseGet(() -> roleRepository.save(new Role(roleName)));
+    }
+
+    private User createAndSaveUser(RegisterDto registerDto, University university, Role role) {
+        User newUser = userFactory.createUser(
+                registerDto.getUsername(),
+                registerDto.getFullName(),
+                registerDto.getPassword(),
+                registerDto.getEmail(),
+                registerDto.getPhoneNumber(),
+                registerDto.getGroupNumber()
+        );
+        newUser.setUniversity(university);
+        newUser.setRoles(Set.of(role));
+        return newUser;
     }
 
     private void validateUserUniqueness(RegisterDto registerDto) {
