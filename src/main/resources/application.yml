@@ -6,7 +6,7 @@ spring:
   profiles:
     active: dev
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/schedule_university_auth}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/schedule_university_auth}
     username: ${DB_USER:abuser}
     password: ${DB_PASSWORD:abuser}
     driver-class-name: org.postgresql.Driver
@@ -26,5 +26,9 @@ logging:
 
 jwt:
   secret: aojisfoapwjfeqauiwfpqwfjipqfqpiwfjopqowfjiqpowfjiqjpqowjfpqwejfipqwefjpqwfjeqw
-  access-token-expiration: 3600
-  refresh-token-expiration: 7200
+  parser-secret: verysecurekey123456789
+  main-secret: aojisfoapwjfeqauiwfpqwfjipqfqpiwfjopqowfjiqpowfjiqjpqowjfpqwejfipqwefjpqwfjeqw
+  auth-issuer: sch-auth
+  main-audience: sch-main
+  access-token-expiration: 900 # 15 minutes
+  refresh-token-expiration: 3600 # 1 hour
