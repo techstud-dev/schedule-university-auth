@@ -36,9 +36,8 @@ public class UserAuthFacade {
     }
 
     public void logout(LogoutRequest request) {
-        if (request.refreshToken() == null) {
-            log.info("Refresh token is null, id: {}", request.requestId());
-            throw new InvalidJwtTokenException();
+        if (request.refreshToken() == null || request.refreshToken().isBlank()) {
+            throw new InvalidJwtTokenException("Refresh token is empty");
         }
         logoutService.clearRefreshToken(request);
     }

@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LogoutServiceImpl implements LogoutService {
 
+    private static final int NO_UPDATED_RECORDS = 0;
+
     private final UserRepository repository;
 
     @Override
@@ -22,7 +24,7 @@ public class LogoutServiceImpl implements LogoutService {
         log.info("Clear refresh token, id: {}", request.requestId());
         int updated = repository.clearRefreshToken(request.refreshToken());
 
-        if (updated == 0) {
+        if (updated == NO_UPDATED_RECORDS) {
             throw new UserNotFoundException("No user found with refresh token") ;
         }
     }
