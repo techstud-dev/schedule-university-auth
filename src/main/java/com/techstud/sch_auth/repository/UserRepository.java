@@ -2,6 +2,7 @@ package com.techstud.sch_auth.repository;
 
 import com.techstud.sch_auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmailIgnoreCase(String email);
 
     Optional<User> findByPhoneNumber(String phoneNumber);
+
+    @Modifying
+    @Query("UPDATE User u SET u.refreshToken = null WHERE u.refreshToken.refreshToken = :refreshToken")
+    int clearRefreshToken(@Param("refreshToken") String refreshToken);
 
     @Query(value = """
     SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u \s

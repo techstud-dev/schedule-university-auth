@@ -1,4 +1,4 @@
-package com.techstud.sch_auth.service;
+package com.techstud.sch_auth.validation;
 
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;

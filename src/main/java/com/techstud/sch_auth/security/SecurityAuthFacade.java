@@ -1,7 +1,7 @@
 package com.techstud.sch_auth.security;
 
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
-import com.techstud.sch_auth.service.ValidationService;
+import com.techstud.sch_auth.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
