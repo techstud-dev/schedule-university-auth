@@ -15,6 +15,7 @@ import com.techstud.sch_auth.util.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -275,7 +276,30 @@ public class AuthController {
     }
 
     @Operation(
-
+            summary = "Выход пользователя из системы",
+            description = "Завершает сессию пользователя, удаляя refresh token",
+            tags = "Authentication",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "204",
+                            description = "Успешный выход из системы"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Невалидный запрос / Пользователь не найден",
+                            content = @Content(
+                                    examples = @ExampleObject(
+                                            value = """
+                                            {
+                                                "systemName": "Schedule Auth",
+                                                "applicationName": "tchs",
+                                                "error": "No user found with refresh token"
+                                            }
+                                            """
+                                    )
+                            )
+                    )
+            }
     )
     @DeleteMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {

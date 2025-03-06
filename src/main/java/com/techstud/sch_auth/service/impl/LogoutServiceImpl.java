@@ -1,6 +1,7 @@
 package com.techstud.sch_auth.service.impl;
 
 import com.techstud.sch_auth.dto.LogoutRequest;
+import com.techstud.sch_auth.exception.UserNotFoundException;
 import com.techstud.sch_auth.repository.UserRepository;
 import com.techstud.sch_auth.service.LogoutService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class LogoutServiceImpl implements LogoutService {
         int updated = repository.clearRefreshToken(request.refreshToken());
 
         if (updated == 0) {
-            log.warn("No user found with refresh token: {}", request.refreshToken());
+            throw new UserNotFoundException("No user found with refresh token") ;
         }
     }
 }
