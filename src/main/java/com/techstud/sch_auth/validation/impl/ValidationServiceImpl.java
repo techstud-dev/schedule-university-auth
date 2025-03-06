@@ -1,4 +1,4 @@
-package com.techstud.sch_auth.service.impl;
+package com.techstud.sch_auth.validation.impl;
 
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -6,7 +6,7 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import com.techstud.sch_auth.exception.BadCredentialsException;
 import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.security.TokenService;
-import com.techstud.sch_auth.service.ValidationService;
+import com.techstud.sch_auth.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

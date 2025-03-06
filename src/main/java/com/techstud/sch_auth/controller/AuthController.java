@@ -1,6 +1,7 @@
 package com.techstud.sch_auth.controller;
 
 import com.techstud.sch_auth.dto.LoginDto;
+import com.techstud.sch_auth.dto.LogoutRequest;
 import com.techstud.sch_auth.dto.RegisterDto;
 import com.techstud.sch_auth.dto.SuccessAuthenticationDto;
 import com.techstud.sch_auth.entity.RefreshToken;
@@ -14,6 +15,7 @@ import com.techstud.sch_auth.util.ResponseUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -99,13 +101,13 @@ public class AuthController {
     )
     @PostMapping("/login")
     public ResponseEntity<SuccessAuthenticationDto> login(@RequestBody LoginDto loginDto) {
+        log.info("Received login request, id: {}", loginDto.getRequestId());
         SuccessAuthenticationDto response = authFacade.login(loginDto);
-
         List<ResponseCookie> cookies = cookieUtil.createAuthCookies(
                 response.getToken(),
                 response.getRefreshToken()
         );
-
+        log.info("Outgoing login request response");
         return responseUtil.okWithCookies(response, cookies.toArray(ResponseCookie[]::new));
     }
 
@@ -187,13 +189,13 @@ public class AuthController {
     )
     @PostMapping("/register")
     public ResponseEntity<SuccessAuthenticationDto> register(@RequestBody RegisterDto registerDto) {
+        log.info("Received register request, id {}", registerDto.getRequestId());
         SuccessAuthenticationDto response = authFacade.register(registerDto);
-
         List<ResponseCookie> cookies = cookieUtil.createAuthCookies(
                 response.getToken(),
                 response.getRefreshToken()
         );
-
+        log.info("Outgoing register response");
         return responseUtil.okWithCookies(response, cookies.toArray(ResponseCookie[]::new));
     }
 
@@ -265,12 +267,46 @@ public class AuthController {
             }
     )
     @PostMapping("/refresh-token")
-    public ResponseEntity<String> refreshToken(@RequestBody RefreshToken refreshTokenRequest) {
-        String accessToken = authFacade.refreshToken(refreshTokenRequest);
-
+    public ResponseEntity<String> refreshToken(@RequestBody RefreshToken request) {
+        log.info("Received refresh token request");
+        String accessToken = authFacade.refreshToken(request);
         ResponseCookie accessTokenCookie = cookieUtil.createAccessTokenCookie(accessToken);
-
+        log.info("Outgoing refresh token response");
         return responseUtil.okWithCookies(accessToken, accessTokenCookie);
     }
 
+    @Operation(
+            summary = "Выход пользователя из системы",
+            description = "Завершает сессию пользователя, удаляя refresh token",
+            tags = "Authentication",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "204",
+                            description = "Успешный выход из системы"
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Невалидный запрос / Пользователь не найден",
+                            content = @Content(
+                                    examples = @ExampleObject(
+                                            value = """
+                                            {
+                                                "systemName": "Schedule Auth",
+                                                "applicationName": "tchs",
+                                                "error": "No user found with refresh token"
+                                            }
+                                            """
+                                    )
+                            )
+                    )
+            }
+    )
+    @DeleteMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) {
+        LogoutRequest processedRequest = LogoutRequest.generateFor(request.refreshToken());
+        log.info("logout request received, id: {}", processedRequest.requestId());
+        authFacade.logout(processedRequest);
+        log.info("Outgoing logout response");
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
         response.put("systemName", systemName);
         response.put("applicationName", applicationName);
         response.put("error", e.getMessage());
-        log.error("User already exists exception", e);
+        log.error("User not found exception", e);
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 

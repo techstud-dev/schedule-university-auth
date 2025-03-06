@@ -5,7 +5,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.techstud.sch_auth.exception.InvalidJwtTokenException;
 import com.techstud.sch_auth.security.TokenService;
-import com.techstud.sch_auth.service.impl.ValidationServiceImpl;
+import com.techstud.sch_auth.validation.impl.ValidationServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
